@@ -121,6 +121,25 @@ public sealed class CoreImageTests
     }
 
     [Fact]
+    public void MeasureUsesOnlyPixelsInsideOvalRoi()
+    {
+        var image = GrayImage.FromPixels(3, 3, new ushort[]
+        {
+            1, 2, 3,
+            4, 5, 6,
+            7, 8, 9
+        });
+
+        var result = Measurements.Measure(image, new OvalRoi(0, 0, 3, 3), PixelCalibration.Identity);
+
+        Assert.Equal(5, result.PixelCount);
+        Assert.Equal(5, result.Area);
+        Assert.Equal(5, result.Mean);
+        Assert.Equal(2, result.Min);
+        Assert.Equal(8, result.Max);
+    }
+
+    [Fact]
     public void ThresholdCreatesBinaryMask()
     {
         var image = GrayImage.FromPixels(3, 1, new ushort[] { 4, 5, 6 });

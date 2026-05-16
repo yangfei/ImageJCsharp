@@ -75,6 +75,23 @@ public sealed class FormStartupTests
     }
 
     [Fact]
+    public void EditMenuCanSelectOvalRoiTool()
+    {
+        RoiShape? selectedTool = null;
+        var capturedException = RunOnStaThread(() =>
+        {
+            using var form = new Form1();
+
+            FindMenuItem(form, "Edit", "Oval Selection").PerformClick();
+
+            selectedTool = GetPrivateField<RoiShape>(form, "_selectionTool");
+        });
+
+        Assert.Null(capturedException);
+        Assert.Equal(RoiShape.Oval, selectedTool);
+    }
+
+    [Fact]
     public void FileCloseClearsActiveImageState()
     {
         string? title = null;
