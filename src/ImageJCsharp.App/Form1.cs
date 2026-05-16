@@ -58,6 +58,7 @@ public partial class Form1 : Form
 
         var analyze = AddMenu(menu, "&Analyze");
         AddItem(analyze, "&Measure", MeasureCurrentRoi, Keys.Control | Keys.M);
+        AddItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
 
         _imagePanel.Dock = DockStyle.Fill;
         _imagePanel.AutoScroll = true;
@@ -223,6 +224,40 @@ public partial class Form1 : Form
             result.Min.ToString("0.###"),
             result.Max.ToString("0.###"),
             result.StandardDeviation.ToString("0.###"));
+    }
+
+    private void ExportResults()
+    {
+        using var dialog = new SaveFileDialog
+        {
+            Filter = "CSV files|*.csv|All files|*.*",
+            FileName = "results.csv"
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        var table = CreateResultsTable();
+        File.WriteAllText(dialog.FileName, ResultsCsvExporter.Export(table));
+        _statusLabel.Text = "Exported results to " + dialog.FileName;
+    }
+
+    private ResultsTable CreateResultsTable()
+    {
+        var headers = _resultsGrid.Columns
+            .Cast<DataGridViewColumn>()
+            .Select(column => column.HeaderText);
+
+        var rows = _resultsGrid.Rows
+            .Cast<DataGridViewRow>()
+            .Where(row => !row.IsNewRow)
+            .Select(row => _resultsGrid.Columns
+                .Cast<DataGridViewColumn>()
+                .Select(column => Convert.ToString(row.Cells[column.Index].Value) ?? string.Empty));
+
+        return new ResultsTable(headers, rows);
     }
 
     private void RefreshDisplay()
