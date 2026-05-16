@@ -18,6 +18,7 @@ public partial class Form1 : Form
     private readonly List<ToolStripMenuItem> _requiresActiveImageItems = new List<ToolStripMenuItem>();
     private readonly List<ToolStripMenuItem> _requiresResultsItems = new List<ToolStripMenuItem>();
     private const string NoImageStatusText = "No image";
+    private MeasurementOptions _measurementOptions = MeasurementOptions.Default;
     private ImageDocument? _document;
     private Bitmap? _displayBitmap;
     private RectRoi? _roi;
@@ -66,6 +67,7 @@ public partial class Form1 : Form
         AddActiveImageItem(analyze, "&Measure", MeasureCurrentRoi, Keys.Control | Keys.M);
         AddActiveImageItem(analyze, "&Histogram", ShowHistogram, shortcutKeyDisplayString: "H");
         AddActiveImageItem(analyze, "Set &Scale...", SetScale);
+        AddItem(analyze, "Set &Measurements...", SetMeasurements);
         AddResultsItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
 
         var view = AddMenu(menu, "&View");
@@ -98,13 +100,7 @@ public partial class Form1 : Form
         _resultsGrid.AllowUserToAddRows = false;
         _resultsGrid.ReadOnly = true;
         _resultsGrid.RowHeadersVisible = false;
-        _resultsGrid.Columns.Add("Name", "Name");
-        _resultsGrid.Columns.Add("Area", "Area");
-        _resultsGrid.Columns.Add("Unit", "Unit");
-        _resultsGrid.Columns.Add("Mean", "Mean");
-        _resultsGrid.Columns.Add("Min", "Min");
-        _resultsGrid.Columns.Add("Max", "Max");
-        _resultsGrid.Columns.Add("StdDev", "StdDev");
+        ApplyMeasurementOptions();
         Controls.Add(_resultsGrid);
 
         _statusStrip.Items.Add(_statusLabel);
@@ -292,15 +288,98 @@ public partial class Form1 : Form
 
         var roi = _roi ?? new RectRoi(0, 0, _document.Image.Width, _document.Image.Height);
         var result = Measurements.Measure(_document.Image, roi, _document.Calibration);
-        _resultsGrid.Rows.Add(
-            _document.DisplayName,
-            result.Area.ToString("0.###"),
-            _document.Calibration.Unit,
-            result.Mean.ToString("0.###"),
-            result.Min.ToString("0.###"),
-            result.Max.ToString("0.###"),
-            result.StandardDeviation.ToString("0.###"));
+        _resultsGrid.Rows.Add(CreateMeasurementRow(result));
         UpdateCommandStates();
+    }
+
+    private string[] CreateMeasurementRow(MeasurementResult result)
+    {
+        var values = new List<string> { _document?.DisplayName ?? string.Empty };
+        if (_measurementOptions.ShowArea)
+        {
+            values.Add(result.Area.ToString("0.###"));
+            values.Add(_document?.Calibration.Unit ?? PixelCalibration.Identity.Unit);
+        }
+
+        if (_measurementOptions.ShowMean)
+        {
+            values.Add(result.Mean.ToString("0.###"));
+        }
+
+        if (_measurementOptions.ShowMin)
+        {
+            values.Add(result.Min.ToString("0.###"));
+        }
+
+        if (_measurementOptions.ShowMax)
+        {
+            values.Add(result.Max.ToString("0.###"));
+        }
+
+        if (_measurementOptions.ShowStandardDeviation)
+        {
+            values.Add(result.StandardDeviation.ToString("0.###"));
+        }
+
+        return values.ToArray();
+    }
+
+    private void SetMeasurements()
+    {
+        using var form = new Form
+        {
+            Text = "Set Measurements",
+            Width = 260,
+            Height = 250,
+            FormBorderStyle = FormBorderStyle.FixedDialog,
+            StartPosition = FormStartPosition.CenterParent,
+            MinimizeBox = false,
+            MaximizeBox = false
+        };
+
+        var list = new CheckedListBox
+        {
+            Dock = DockStyle.Top,
+            Height = 150,
+            CheckOnClick = true
+        };
+        list.Items.Add("Area", _measurementOptions.ShowArea);
+        list.Items.Add("Mean", _measurementOptions.ShowMean);
+        list.Items.Add("Min", _measurementOptions.ShowMin);
+        list.Items.Add("Max", _measurementOptions.ShowMax);
+        list.Items.Add("StdDev", _measurementOptions.ShowStandardDeviation);
+        form.Controls.Add(list);
+
+        var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Dock = DockStyle.Bottom };
+        var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Dock = DockStyle.Bottom };
+        form.Controls.Add(cancel);
+        form.Controls.Add(ok);
+        form.AcceptButton = ok;
+        form.CancelButton = cancel;
+
+        if (form.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        _measurementOptions = new MeasurementOptions(
+            list.GetItemChecked(0),
+            list.GetItemChecked(1),
+            list.GetItemChecked(2),
+            list.GetItemChecked(3),
+            list.GetItemChecked(4));
+        ApplyMeasurementOptions();
+        UpdateCommandStates();
+    }
+
+    private void ApplyMeasurementOptions()
+    {
+        _resultsGrid.Rows.Clear();
+        _resultsGrid.Columns.Clear();
+        foreach (var column in _measurementOptions.GetColumnNames())
+        {
+            _resultsGrid.Columns.Add(column, column);
+        }
     }
 
     private void SetScale()
