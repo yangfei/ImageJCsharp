@@ -189,6 +189,36 @@ public sealed class FormStartupTests
         Assert.Equal("um", unit);
     }
 
+    [Fact]
+    public void MeasureCurrentRoiUsesSelectedMeasurementOptions()
+    {
+        string[]? columns = null;
+        string[]? values = null;
+
+        var capturedException = RunOnStaThread(() =>
+        {
+            using var form = new Form1();
+            LoadTestImage(form);
+            SetPrivateField(form, "_measurementOptions", new MeasurementOptions(
+                showArea: true,
+                showMean: false,
+                showMin: false,
+                showMax: true,
+                showStandardDeviation: false));
+            InvokePrivateMethod(form, "ApplyMeasurementOptions");
+
+            InvokePrivateMethod(form, "MeasureCurrentRoi");
+
+            var grid = GetPrivateField<DataGridView>(form, "_resultsGrid");
+            columns = grid.Columns.Cast<DataGridViewColumn>().Select(column => column.Name).ToArray();
+            values = grid.Rows[0].Cells.Cast<DataGridViewCell>().Select(cell => Convert.ToString(cell.Value) ?? string.Empty).ToArray();
+        });
+
+        Assert.Null(capturedException);
+        Assert.Equal(new[] { "Name", "Area", "Unit", "Max" }, columns);
+        Assert.Equal(new[] { "close-smoke.png", "1", "pixel", "10" }, values);
+    }
+
     private static Exception? RunOnStaThread(Action action)
     {
         Exception? capturedException = null;
