@@ -10,7 +10,7 @@ ImageJCsharp Measure behavior.
 | ImageJ build | ImageJ 1.54s99 |
 | ImageJ source | `https://wsr.imagej.net/jars/ij.jar` |
 | Java | `C:\Java21\jdk-21.0.2\bin\java.exe` |
-| ImageJCsharp commit | `762eae3` |
+| ImageJCsharp commit compared initially | `762eae3` |
 | Operating system | Windows |
 
 ImageJ was run through its Java API with `ij.plugin.filter.Analyzer` using these
@@ -53,7 +53,7 @@ The ROI covers these four pixels:
 
 ### Full Image
 
-| Measurement | ImageJ 1.54s99 | ImageJCsharp | Status |
+| Measurement | ImageJ 1.54s99 | ImageJCsharp at `762eae3` | Initial Status |
 | --- | ---: | ---: | --- |
 | Area | 12 | 12 | Match |
 | Mean | 55 | 55 | Match |
@@ -63,7 +63,7 @@ The ROI covers these four pixels:
 
 ### Rectangle ROI
 
-| Measurement | ImageJ 1.54s99 | ImageJCsharp | Status |
+| Measurement | ImageJ 1.54s99 | ImageJCsharp at `762eae3` | Initial Status |
 | --- | ---: | ---: | --- |
 | Area | 4 | 4 | Match |
 | Mean | 75 | 75 | Match |
@@ -82,13 +82,13 @@ deviation.
 
 ## Follow-Up
 
-Follow-up issue:
+Follow-up issue created from this comparison:
 
 ```text
 https://github.com/yangfei/ImageJCsharp/issues/57
 ```
 
-That issue tracks the decision and implementation work for aligning
-ImageJCsharp standard deviation behavior with ImageJ, if that is the desired
-compatibility target.
-
+Issue #57 aligned ImageJCsharp Measure with ImageJ for these StdDev cases by
+using sample standard deviation in `Measurements.Measure`. Automated Core tests
+now assert the ImageJ 1.54s99 full-image and rectangle-ROI StdDev values listed
+above.

@@ -105,6 +105,36 @@ public sealed class CoreImageTests
     }
 
     [Fact]
+    public void MeasureUsesImageJCompatibleSampleStandardDeviation()
+    {
+        var image = GrayImage.FromPixels(4, 3, new ushort[]
+        {
+            0, 10, 20, 30,
+            40, 50, 60, 70,
+            80, 90, 100, 110
+        });
+
+        var result = Measurements.Measure(image, new RectRoi(0, 0, 4, 3), PixelCalibration.Identity);
+
+        Assert.Equal(36.05551275463989, result.StandardDeviation, 12);
+    }
+
+    [Fact]
+    public void MeasureRoiUsesImageJCompatibleSampleStandardDeviation()
+    {
+        var image = GrayImage.FromPixels(4, 3, new ushort[]
+        {
+            0, 10, 20, 30,
+            40, 50, 60, 70,
+            80, 90, 100, 110
+        });
+
+        var result = Measurements.Measure(image, new RectRoi(1, 1, 2, 2), PixelCalibration.Identity);
+
+        Assert.Equal(23.804761428476166, result.StandardDeviation, 12);
+    }
+
+    [Fact]
     public void MeasureUsesPixelCalibrationForArea()
     {
         var image = GrayImage.FromPixels(2, 2, new ushort[]

@@ -138,7 +138,9 @@ public static class Measurements
         }
 
         var mean = sum / count;
-        var variance = Math.Max(0, (sumSquares / count) - (mean * mean));
+        var variance = count > 1
+            ? Math.Max(0, (sumSquares - ((sum * sum) / count)) / (count - 1))
+            : 0;
         var area = count * calibration.PixelWidth * calibration.PixelHeight;
 
         return new MeasurementResult(count, area, mean, min, max, Math.Sqrt(variance));
