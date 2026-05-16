@@ -56,6 +56,10 @@ public sealed class FormStartupTests
                 ["Process/Gaussian Blur"] = FindMenuItem(form, "Process", "Gaussian Blur").Enabled,
                 ["Process/Median"] = FindMenuItem(form, "Process", "Median").Enabled,
                 ["Process/Sharpen"] = FindMenuItem(form, "Process", "Sharpen").Enabled,
+                ["Process/Erode"] = FindMenuItem(form, "Process", "Erode").Enabled,
+                ["Process/Dilate"] = FindMenuItem(form, "Process", "Dilate").Enabled,
+                ["Process/Open"] = FindMenuItem(form, "Process", "Open").Enabled,
+                ["Process/Close"] = FindMenuItem(form, "Process", "Close").Enabled,
                 ["Process/Threshold"] = FindMenuItem(form, "Process", "Threshold...").Enabled,
                 ["Analyze/Measure"] = FindMenuItem(form, "Analyze", "Measure").Enabled,
                 ["Analyze/Histogram"] = FindMenuItem(form, "Analyze", "Histogram").Enabled,
@@ -145,6 +149,10 @@ public sealed class FormStartupTests
                 InvokePrivateMethod(form, "ApplyGaussianBlur");
                 InvokePrivateMethod(form, "ApplyMedianFilter");
                 InvokePrivateMethod(form, "ApplySharpen");
+                InvokePrivateMethod(form, "ApplyErode");
+                InvokePrivateMethod(form, "ApplyDilate");
+                InvokePrivateMethod(form, "ApplyOpen");
+                InvokePrivateMethod(form, "ApplyClose");
                 InvokePrivateMethod(form, "MeasureCurrentRoi");
                 InvokePrivateMethod(form, "ShowHistogram");
             }

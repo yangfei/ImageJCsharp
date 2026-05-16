@@ -166,6 +166,87 @@ public sealed class CoreImageTests
     }
 
     [Fact]
+    public void BinaryDilateExpandsSinglePixelWithThreeByThreeNeighborhood()
+    {
+        var image = CreateBinaryImage(3, 3, new[]
+        {
+            false, false, false,
+            false, true, false,
+            false, false, false
+        });
+
+        var dilated = ImageProcessor.Dilate(image);
+
+        AssertBinaryEquals(dilated, new[]
+        {
+            true, true, true,
+            true, true, true,
+            true, true, true
+        });
+    }
+
+    [Fact]
+    public void BinaryErodeRequiresFullThreeByThreeNeighborhood()
+    {
+        var image = CreateBinaryImage(5, 5, new[]
+        {
+            false, false, false, false, false,
+            false, true, true, true, false,
+            false, true, true, true, false,
+            false, true, true, true, false,
+            false, false, false, false, false
+        });
+
+        var eroded = ImageProcessor.Erode(image);
+
+        AssertBinaryEquals(eroded, new[]
+        {
+            false, false, false, false, false,
+            false, false, false, false, false,
+            false, false, true, false, false,
+            false, false, false, false, false,
+            false, false, false, false, false
+        });
+    }
+
+    [Fact]
+    public void BinaryOpenRemovesIsolatedPixel()
+    {
+        var image = CreateBinaryImage(3, 3, new[]
+        {
+            false, false, false,
+            false, true, false,
+            false, false, false
+        });
+
+        var opened = ImageProcessor.Open(image);
+
+        AssertBinaryEquals(opened, new[]
+        {
+            false, false, false,
+            false, false, false,
+            false, false, false
+        });
+    }
+
+    [Fact]
+    public void BinaryCloseFillsSmallHole()
+    {
+        var image = CreateBinaryImage(5, 5, new[]
+        {
+            false, false, false, false, false,
+            false, true, true, true, false,
+            false, true, false, true, false,
+            false, true, true, true, false,
+            false, false, false, false, false
+        });
+
+        var closed = ImageProcessor.Close(image);
+
+        Assert.True(closed[2, 2]);
+    }
+
+    [Fact]
     public void InvertFlipsAgainstImageMaximum()
     {
         var image = GrayImage.FromPixels(3, 1, new ushort[] { 0, 100, 255 });
@@ -351,5 +432,31 @@ public sealed class CoreImageTests
         var profile = Profile.Line(image, new LineRoi(0, 0, 2, 2));
 
         Assert.Equal(new ushort[] { 1, 5, 9 }, profile.Values);
+    }
+
+    private static BinaryImage CreateBinaryImage(int width, int height, bool[] pixels)
+    {
+        var image = new BinaryImage(width, height);
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                image[x, y] = pixels[(y * width) + x];
+            }
+        }
+
+        return image;
+    }
+
+    private static void AssertBinaryEquals(BinaryImage image, bool[] expected)
+    {
+        Assert.Equal(image.Width * image.Height, expected.Length);
+        for (var y = 0; y < image.Height; y++)
+        {
+            for (var x = 0; x < image.Width; x++)
+            {
+                Assert.Equal(expected[(y * image.Width) + x], image[x, y]);
+            }
+        }
     }
 }

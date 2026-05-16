@@ -48,6 +48,54 @@ public static class ImageProcessor
         return result;
     }
 
+    public static BinaryImage Erode(BinaryImage image)
+    {
+        if (image is null)
+        {
+            throw new ArgumentNullException(nameof(image));
+        }
+
+        var result = new BinaryImage(image.Width, image.Height);
+        for (var y = 0; y < image.Height; y++)
+        {
+            for (var x = 0; x < image.Width; x++)
+            {
+                result[x, y] = AllNeighborsSet(image, x, y);
+            }
+        }
+
+        return result;
+    }
+
+    public static BinaryImage Dilate(BinaryImage image)
+    {
+        if (image is null)
+        {
+            throw new ArgumentNullException(nameof(image));
+        }
+
+        var result = new BinaryImage(image.Width, image.Height);
+        for (var y = 0; y < image.Height; y++)
+        {
+            for (var x = 0; x < image.Width; x++)
+            {
+                result[x, y] = AnyNeighborSet(image, x, y);
+            }
+        }
+
+        return result;
+    }
+
+    public static BinaryImage Open(BinaryImage image)
+    {
+        return Dilate(Erode(image));
+    }
+
+    public static BinaryImage Close(BinaryImage image)
+    {
+        return Erode(Dilate(image));
+    }
+
     public static GrayImage SobelEdges(GrayImage image)
     {
         if (image is null)
@@ -171,6 +219,48 @@ public static class ImageProcessor
     private static ushort SampleClamped(GrayImage image, int x, int y)
     {
         return image[Clamp(x, 0, image.Width - 1), Clamp(y, 0, image.Height - 1)];
+    }
+
+    private static bool SampleBinary(BinaryImage image, int x, int y)
+    {
+        if (x < 0 || x >= image.Width || y < 0 || y >= image.Height)
+        {
+            return false;
+        }
+
+        return image[x, y];
+    }
+
+    private static bool AllNeighborsSet(BinaryImage image, int x, int y)
+    {
+        for (var ky = -1; ky <= 1; ky++)
+        {
+            for (var kx = -1; kx <= 1; kx++)
+            {
+                if (!SampleBinary(image, x + kx, y + ky))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool AnyNeighborSet(BinaryImage image, int x, int y)
+    {
+        for (var ky = -1; ky <= 1; ky++)
+        {
+            for (var kx = -1; kx <= 1; kx++)
+            {
+                if (SampleBinary(image, x + kx, y + ky))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static int Clamp(int value, int minimum, int maximum)
