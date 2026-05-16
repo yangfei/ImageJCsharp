@@ -18,6 +18,8 @@ public partial class Form1 : Form
     private Bitmap? _displayBitmap;
     private RectRoi? _roi;
     private Point? _dragStartImagePoint;
+    private RectRoi? _resizeStartRoi;
+    private RoiResizeHandle _activeResizeHandle = RoiResizeHandle.None;
     private double _zoom = 1d;
 
     public Form1()
@@ -182,6 +184,8 @@ public partial class Form1 : Form
         _displayBitmap = null;
         _imageBox.Image = null;
         _imageBox.Size = Size.Empty;
+        _resizeStartRoi = null;
+        _activeResizeHandle = RoiResizeHandle.None;
         UpdateTitle();
     }
 
@@ -365,24 +369,59 @@ public partial class Form1 : Form
         }
 
         _dragStartImagePoint = ToImagePoint(e.Location);
-        _roi = new RectRoi(_dragStartImagePoint.Value.X, _dragStartImagePoint.Value.Y, 1, 1);
+        _activeResizeHandle = _roi is null
+            ? RoiResizeHandle.None
+            : RoiResizeInteraction.HitTestHandle(_roi.Value, e.Location, _zoom);
+
+        if (_activeResizeHandle == RoiResizeHandle.None)
+        {
+            _resizeStartRoi = null;
+            _roi = new RectRoi(_dragStartImagePoint.Value.X, _dragStartImagePoint.Value.Y, 1, 1);
+        }
+        else
+        {
+            _resizeStartRoi = _roi;
+        }
+
         _imageBox.Invalidate();
     }
 
     private void ImageBoxMouseMove(object? sender, MouseEventArgs e)
     {
-        if (_document is null || _dragStartImagePoint is null)
+        if (_document is null)
         {
             return;
         }
 
-        _roi = CreateRoi(_dragStartImagePoint.Value, ToImagePoint(e.Location), _document.Image.Width, _document.Image.Height);
-        _imageBox.Invalidate();
+        if (_dragStartImagePoint is not null)
+        {
+            if (_activeResizeHandle == RoiResizeHandle.None)
+            {
+                _roi = CreateRoi(_dragStartImagePoint.Value, ToImagePoint(e.Location), _document.Image.Width, _document.Image.Height);
+            }
+            else if (_resizeStartRoi is not null)
+            {
+                _roi = RoiResizeInteraction.Resize(
+                    _resizeStartRoi.Value,
+                    _activeResizeHandle,
+                    ToImagePoint(e.Location),
+                    _document.Image.Width,
+                    _document.Image.Height);
+            }
+
+            _imageBox.Invalidate();
+            return;
+        }
+
+        UpdateImageBoxCursor(e.Location);
     }
 
     private void ImageBoxMouseUp(object? sender, MouseEventArgs e)
     {
         _dragStartImagePoint = null;
+        _resizeStartRoi = null;
+        _activeResizeHandle = RoiResizeHandle.None;
+        UpdateImageBoxCursor(e.Location);
     }
 
     private void ImageBoxPaint(object? sender, PaintEventArgs e)
@@ -400,6 +439,47 @@ public partial class Form1 : Form
             (float)(roi.Y * _zoom),
             (float)(roi.Width * _zoom),
             (float)(roi.Height * _zoom));
+
+        DrawRoiHandles(e.Graphics, roi);
+    }
+
+    private void DrawRoiHandles(Graphics graphics, RectRoi roi)
+    {
+        foreach (var handle in new[]
+        {
+            RoiResizeHandle.NorthWest,
+            RoiResizeHandle.North,
+            RoiResizeHandle.NorthEast,
+            RoiResizeHandle.East,
+            RoiResizeHandle.SouthEast,
+            RoiResizeHandle.South,
+            RoiResizeHandle.SouthWest,
+            RoiResizeHandle.West
+        })
+        {
+            var bounds = RoiResizeInteraction.GetHandleBounds(roi, handle, _zoom);
+            graphics.FillRectangle(Brushes.White, bounds);
+            graphics.DrawRectangle(Pens.Black, bounds);
+        }
+    }
+
+    private void UpdateImageBoxCursor(Point controlPoint)
+    {
+        if (_roi is null)
+        {
+            _imageBox.Cursor = Cursors.Cross;
+            return;
+        }
+
+        var handle = RoiResizeInteraction.HitTestHandle(_roi.Value, controlPoint, _zoom);
+        _imageBox.Cursor = handle switch
+        {
+            RoiResizeHandle.NorthWest or RoiResizeHandle.SouthEast => Cursors.SizeNWSE,
+            RoiResizeHandle.NorthEast or RoiResizeHandle.SouthWest => Cursors.SizeNESW,
+            RoiResizeHandle.North or RoiResizeHandle.South => Cursors.SizeNS,
+            RoiResizeHandle.East or RoiResizeHandle.West => Cursors.SizeWE,
+            _ => Cursors.Cross
+        };
     }
 
     private Point ToImagePoint(Point controlPoint)
