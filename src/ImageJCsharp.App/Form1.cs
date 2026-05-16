@@ -277,17 +277,7 @@ public partial class Form1 : Form
             return;
         }
 
-        var binary = ImageProcessor.Threshold(_document.Image, minimum, 255);
-        var image = new GrayImage(binary.Width, binary.Height);
-        for (var y = 0; y < binary.Height; y++)
-        {
-            for (var x = 0; x < binary.Width; x++)
-            {
-                image[x, y] = binary[x, y] ? (ushort)255 : (ushort)0;
-            }
-        }
-
-        _document.Image = image;
+        _document.Image = BinaryImageConversion.ToGrayImage(ImageProcessor.Threshold(_document.Image, minimum, 255));
         RefreshDisplay();
     }
 
