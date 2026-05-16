@@ -70,6 +70,9 @@ public partial class Form1 : Form
         var process = AddMenu(menu, "&Process");
         AddActiveImageItem(process, "&Invert", ApplyInvert);
         AddActiveImageItem(process, "&Find Edges", ApplyFindEdges);
+        AddActiveImageItem(process, "&Gaussian Blur", ApplyGaussianBlur);
+        AddActiveImageItem(process, "&Median", ApplyMedianFilter);
+        AddActiveImageItem(process, "&Sharpen", ApplySharpen);
         AddActiveImageItem(process, "&Threshold...", ApplyThreshold);
 
         var analyze = AddMenu(menu, "&Analyze");
@@ -278,6 +281,39 @@ public partial class Form1 : Form
         }
 
         _document.Image = ImageProcessor.SobelEdges(_document.Image);
+        RefreshDisplay();
+    }
+
+    private void ApplyGaussianBlur()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        _document.Image = ImageProcessor.GaussianBlur(_document.Image);
+        RefreshDisplay();
+    }
+
+    private void ApplyMedianFilter()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        _document.Image = ImageProcessor.MedianFilter(_document.Image);
+        RefreshDisplay();
+    }
+
+    private void ApplySharpen()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        _document.Image = ImageProcessor.Sharpen(_document.Image);
         RefreshDisplay();
     }
 

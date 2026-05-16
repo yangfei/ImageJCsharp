@@ -195,6 +195,53 @@ public sealed class CoreImageTests
     }
 
     [Fact]
+    public void GaussianBlurUsesThreeByThreeWeightedKernel()
+    {
+        var image = GrayImage.FromPixels(3, 3, new ushort[]
+        {
+            0, 0, 0,
+            0, 160, 0,
+            0, 0, 0
+        });
+
+        var blurred = ImageProcessor.GaussianBlur(image);
+
+        Assert.Equal(40, blurred[1, 1]);
+        Assert.Equal(20, blurred[0, 1]);
+        Assert.Equal(10, blurred[0, 0]);
+    }
+
+    [Fact]
+    public void MedianFilterReplacesCenterWithNeighborhoodMedian()
+    {
+        var image = GrayImage.FromPixels(3, 3, new ushort[]
+        {
+            10, 10, 10,
+            10, 250, 10,
+            10, 10, 10
+        });
+
+        var filtered = ImageProcessor.MedianFilter(image);
+
+        Assert.Equal(10, filtered[1, 1]);
+    }
+
+    [Fact]
+    public void SharpenEnhancesCenterPixelWithFourNeighborKernel()
+    {
+        var image = GrayImage.FromPixels(3, 3, new ushort[]
+        {
+            10, 10, 10,
+            10, 20, 10,
+            10, 10, 10
+        });
+
+        var sharpened = ImageProcessor.Sharpen(image);
+
+        Assert.Equal(60, sharpened[1, 1]);
+    }
+
+    [Fact]
     public void HistogramCountsKnownEightBitValues()
     {
         var image = GrayImage.FromPixels(4, 2, new ushort[]
