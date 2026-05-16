@@ -17,6 +17,7 @@ public partial class Form1 : Form
     private readonly ToolStripStatusLabel _statusLabel = new ToolStripStatusLabel();
     private readonly List<ToolStripMenuItem> _requiresActiveImageItems = new List<ToolStripMenuItem>();
     private readonly List<ToolStripMenuItem> _requiresResultsItems = new List<ToolStripMenuItem>();
+    private const string NoImageStatusText = "No image";
     private ImageDocument? _document;
     private Bitmap? _displayBitmap;
     private RectRoi? _roi;
@@ -107,6 +108,7 @@ public partial class Form1 : Form
         _statusStrip.Items.Add(_statusLabel);
         Controls.Add(_statusStrip);
 
+        _statusLabel.Text = NoImageStatusText;
         UpdateCommandStates();
     }
 
@@ -233,7 +235,7 @@ public partial class Form1 : Form
         _imageBox.Image = null;
         _imageBox.Size = Size.Empty;
         _imageBox.Invalidate();
-        _statusLabel.Text = string.Empty;
+        _statusLabel.Text = NoImageStatusText;
         _resizeStartRoi = null;
         _activeResizeHandle = RoiResizeHandle.None;
         UpdateTitle();
@@ -413,7 +415,7 @@ public partial class Form1 : Form
         _zoom = Math.Max(0.05, Math.Min(32, zoom));
         ResizeImageBox();
         _imageBox.Invalidate();
-        _statusLabel.Text = _document is null ? string.Empty : $"{_document.Image.Width} x {_document.Image.Height}  Zoom: {_zoom:P0}";
+        _statusLabel.Text = _document is null ? NoImageStatusText : $"{_document.Image.Width} x {_document.Image.Height}  Zoom: {_zoom:P0}";
     }
 
     private void FitToWindow()

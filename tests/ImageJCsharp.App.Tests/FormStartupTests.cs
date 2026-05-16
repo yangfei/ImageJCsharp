@@ -116,11 +116,52 @@ public sealed class FormStartupTests
         Assert.Null(capturedException);
         Assert.Null(noImageCommandException);
         Assert.Equal("ImageJCsharp", title);
-        Assert.Equal(string.Empty, statusText);
+        Assert.Equal("No image", statusText);
         Assert.True(imageCleared);
         Assert.True(imageBoxSizeCleared);
         Assert.True(roiCleared);
         Assert.True(closeDisabledAfterClose);
+    }
+
+    [Fact]
+    public void Form1ReportsImageSizeAndZoomInStatusBar()
+    {
+        string? startupStatus = null;
+        string? openedStatus = null;
+        string? zoomInStatus = null;
+        string? zoomOutStatus = null;
+        string? actualSizeStatus = null;
+        string? fitToWindowStatus = null;
+
+        var capturedException = RunOnStaThread(() =>
+        {
+            using var form = new Form1();
+            startupStatus = GetStatusText(form);
+
+            LoadTestImage(form);
+            openedStatus = GetStatusText(form);
+
+            FindMenuItem(form, "View", "Zoom In").PerformClick();
+            zoomInStatus = GetStatusText(form);
+
+            FindMenuItem(form, "View", "Zoom Out").PerformClick();
+            zoomOutStatus = GetStatusText(form);
+
+            FindMenuItem(form, "View", "Zoom In").PerformClick();
+            FindMenuItem(form, "View", "Actual Size").PerformClick();
+            actualSizeStatus = GetStatusText(form);
+
+            FindMenuItem(form, "View", "Fit to Window").PerformClick();
+            fitToWindowStatus = GetStatusText(form);
+        });
+
+        Assert.Null(capturedException);
+        Assert.Equal("No image", startupStatus);
+        Assert.Equal("2 x 2  Zoom: 100%", openedStatus);
+        Assert.Equal("2 x 2  Zoom: 125%", zoomInStatus);
+        Assert.Equal("2 x 2  Zoom: 100%", zoomOutStatus);
+        Assert.Equal("2 x 2  Zoom: 100%", actualSizeStatus);
+        Assert.StartsWith("2 x 2  Zoom: ", fitToWindowStatus);
     }
 
     private static Exception? RunOnStaThread(Action action)
