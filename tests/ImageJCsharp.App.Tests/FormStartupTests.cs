@@ -53,6 +53,9 @@ public sealed class FormStartupTests
                 ["File/Exit"] = FindMenuItem(form, "File", "Exit").Enabled,
                 ["Process/Invert"] = FindMenuItem(form, "Process", "Invert").Enabled,
                 ["Process/Find Edges"] = FindMenuItem(form, "Process", "Find Edges").Enabled,
+                ["Process/Gaussian Blur"] = FindMenuItem(form, "Process", "Gaussian Blur").Enabled,
+                ["Process/Median"] = FindMenuItem(form, "Process", "Median").Enabled,
+                ["Process/Sharpen"] = FindMenuItem(form, "Process", "Sharpen").Enabled,
                 ["Process/Threshold"] = FindMenuItem(form, "Process", "Threshold...").Enabled,
                 ["Analyze/Measure"] = FindMenuItem(form, "Analyze", "Measure").Enabled,
                 ["Analyze/Histogram"] = FindMenuItem(form, "Analyze", "Histogram").Enabled,
@@ -139,6 +142,9 @@ public sealed class FormStartupTests
                 InvokePrivateMethod(form, "CloseImage");
                 InvokePrivateMethod(form, "ApplyInvert");
                 InvokePrivateMethod(form, "ApplyFindEdges");
+                InvokePrivateMethod(form, "ApplyGaussianBlur");
+                InvokePrivateMethod(form, "ApplyMedianFilter");
+                InvokePrivateMethod(form, "ApplySharpen");
                 InvokePrivateMethod(form, "MeasureCurrentRoi");
                 InvokePrivateMethod(form, "ShowHistogram");
             }

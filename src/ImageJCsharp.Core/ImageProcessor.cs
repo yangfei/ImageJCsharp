@@ -76,4 +76,120 @@ public static class ImageProcessor
 
         return result;
     }
+
+    public static GrayImage GaussianBlur(GrayImage image)
+    {
+        if (image is null)
+        {
+            throw new ArgumentNullException(nameof(image));
+        }
+
+        int[,] kernel =
+        {
+            { 1, 2, 1 },
+            { 2, 4, 2 },
+            { 1, 2, 1 }
+        };
+
+        var result = new GrayImage(image.Width, image.Height);
+        for (var y = 0; y < image.Height; y++)
+        {
+            for (var x = 0; x < image.Width; x++)
+            {
+                var sum = 0;
+                for (var ky = -1; ky <= 1; ky++)
+                {
+                    for (var kx = -1; kx <= 1; kx++)
+                    {
+                        sum += SampleClamped(image, x + kx, y + ky) * kernel[ky + 1, kx + 1];
+                    }
+                }
+
+                result[x, y] = (ushort)Math.Round(sum / 16d);
+            }
+        }
+
+        return result;
+    }
+
+    public static GrayImage MedianFilter(GrayImage image)
+    {
+        if (image is null)
+        {
+            throw new ArgumentNullException(nameof(image));
+        }
+
+        var result = new GrayImage(image.Width, image.Height);
+        var values = new ushort[9];
+        for (var y = 0; y < image.Height; y++)
+        {
+            for (var x = 0; x < image.Width; x++)
+            {
+                var index = 0;
+                for (var ky = -1; ky <= 1; ky++)
+                {
+                    for (var kx = -1; kx <= 1; kx++)
+                    {
+                        values[index++] = SampleClamped(image, x + kx, y + ky);
+                    }
+                }
+
+                Array.Sort(values);
+                result[x, y] = values[4];
+            }
+        }
+
+        return result;
+    }
+
+    public static GrayImage Sharpen(GrayImage image)
+    {
+        if (image is null)
+        {
+            throw new ArgumentNullException(nameof(image));
+        }
+
+        var result = new GrayImage(image.Width, image.Height);
+        for (var y = 0; y < image.Height; y++)
+        {
+            for (var x = 0; x < image.Width; x++)
+            {
+                var value =
+                    (5 * image[x, y]) -
+                    SampleClamped(image, x - 1, y) -
+                    SampleClamped(image, x + 1, y) -
+                    SampleClamped(image, x, y - 1) -
+                    SampleClamped(image, x, y + 1);
+
+                result[x, y] = ClampToUShort(value);
+            }
+        }
+
+        return result;
+    }
+
+    private static ushort SampleClamped(GrayImage image, int x, int y)
+    {
+        return image[Clamp(x, 0, image.Width - 1), Clamp(y, 0, image.Height - 1)];
+    }
+
+    private static int Clamp(int value, int minimum, int maximum)
+    {
+        return Math.Min(Math.Max(value, minimum), maximum);
+    }
+
+    private static ushort ClampToUShort(int value)
+    {
+        if (value < 0)
+        {
+            return 0;
+        }
+
+        if (value > ushort.MaxValue)
+        {
+            return ushort.MaxValue;
+        }
+
+        return (ushort)value;
+    }
 }
