@@ -47,11 +47,11 @@ public partial class Form1 : Form
         AddItem(file, "&Close", CloseImage, Keys.Control | Keys.W);
         AddItem(file, "E&xit", () => Close(), Keys.Alt | Keys.F4);
 
-        var view = AddMenu(menu, "&View");
-        AddItem(view, "Zoom &In", () => ChangeZoom(1.25), Keys.Control | Keys.Add);
-        AddItem(view, "Zoom &Out", () => ChangeZoom(0.8), Keys.Control | Keys.Subtract);
-        AddItem(view, "&Actual Size", () => SetZoom(1), Keys.Control | Keys.D0);
-        AddItem(view, "&Fit to Window", FitToWindow);
+        var edit = AddMenu(menu, "&Edit");
+        AddDisabledItem(edit, "No Edit commands yet");
+
+        var image = AddMenu(menu, "&Image");
+        AddDisabledItem(image, "No Image commands yet");
 
         var process = AddMenu(menu, "&Process");
         AddItem(process, "&Invert", ApplyInvert);
@@ -62,6 +62,18 @@ public partial class Form1 : Form
         AddItem(analyze, "&Measure", MeasureCurrentRoi, Keys.Control | Keys.M);
         AddItem(analyze, "&Histogram", ShowHistogram, shortcutKeyDisplayString: "H");
         AddItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
+
+        var view = AddMenu(menu, "&View");
+        AddItem(view, "Zoom &In", () => ChangeZoom(1.25), Keys.Control | Keys.Add);
+        AddItem(view, "Zoom &Out", () => ChangeZoom(0.8), Keys.Control | Keys.Subtract);
+        AddItem(view, "&Actual Size", () => SetZoom(1), Keys.Control | Keys.D0);
+        AddItem(view, "&Fit to Window", FitToWindow);
+
+        var window = AddMenu(menu, "&Window");
+        AddDisabledItem(window, "No Window commands yet");
+
+        var help = AddMenu(menu, "&Help");
+        AddDisabledItem(help, "No Help commands yet");
 
         _imagePanel.Dock = DockStyle.Fill;
         _imagePanel.AutoScroll = true;
@@ -119,6 +131,15 @@ public partial class Form1 : Form
         }
 
         item.Click += (_, _) => action();
+        menu.DropDownItems.Add(item);
+    }
+
+    private static void AddDisabledItem(ToolStripMenuItem menu, string text)
+    {
+        var item = new ToolStripMenuItem(text)
+        {
+            Enabled = false
+        };
         menu.DropDownItems.Add(item);
     }
 
