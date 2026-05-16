@@ -58,7 +58,7 @@ public partial class Form1 : Form
 
         var analyze = AddMenu(menu, "&Analyze");
         AddItem(analyze, "&Measure", MeasureCurrentRoi, Keys.Control | Keys.M);
-        AddItem(analyze, "&Histogram", ShowHistogram, Keys.H);
+        AddItem(analyze, "&Histogram", ShowHistogram, shortcutKeyDisplayString: "H");
         AddItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
 
         _imagePanel.Dock = DockStyle.Fill;
@@ -98,12 +98,37 @@ public partial class Form1 : Form
         return item;
     }
 
-    private static void AddItem(ToolStripMenuItem menu, string text, Action action, Keys shortcut = Keys.None)
+    private static void AddItem(
+        ToolStripMenuItem menu,
+        string text,
+        Action action,
+        Keys shortcut = Keys.None,
+        string shortcutKeyDisplayString = "")
     {
         var item = new ToolStripMenuItem(text);
-        item.ShortcutKeys = shortcut;
+        if (shortcut != Keys.None)
+        {
+            item.ShortcutKeys = shortcut;
+        }
+
+        if (!string.IsNullOrEmpty(shortcutKeyDisplayString))
+        {
+            item.ShortcutKeyDisplayString = shortcutKeyDisplayString;
+        }
+
         item.Click += (_, _) => action();
         menu.DropDownItems.Add(item);
+    }
+
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.H)
+        {
+            ShowHistogram();
+            return true;
+        }
+
+        return base.ProcessCmdKey(ref msg, keyData);
     }
 
     private void OpenImage()
