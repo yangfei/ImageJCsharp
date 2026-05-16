@@ -24,7 +24,7 @@ The MVP is complete when a user can:
 - UI: WinForms.
 - Core library: `ImageJCsharp.Core`.
 - Desktop app: `ImageJCsharp.App`.
-- Tests: `ImageJCsharp.Core.Tests`.
+- Tests: `ImageJCsharp.Core.Tests` and `ImageJCsharp.App.Tests`.
 - Language: C#.
 - Platform: Windows 10 or newer.
 
@@ -38,6 +38,9 @@ The MVP is complete when a user can:
 
 - `tests/ImageJCsharp.Core.Tests/`
   Automated tests for non-UI behavior.
+
+- `tests/ImageJCsharp.App.Tests/`
+  Focused tests for app-level helpers and startup-sensitive WinForms behavior.
 
 - `README.md`
   Project identity, vision, MVP boundaries, and architecture direction.
@@ -158,7 +161,6 @@ Required goals:
 Deferred:
 
 - ROI move.
-- ROI resize handles.
 - ROI Manager.
 - Oval ROI.
 - Line ROI.
@@ -287,32 +289,37 @@ Near-term preference:
 
 ## Near-Term Completion Checklist
 
-- [ ] README states the project vision clearly.
-- [ ] ROADMAP defines near-term, mid-term, and long-term goals.
-- [ ] App, core, and test projects target .NET Framework 4.8.
-- [ ] The solution builds.
-- [ ] Core tests pass.
-- [ ] App starts without crashing.
-- [ ] User can open PNG.
-- [ ] User can open JPEG.
-- [ ] User can open BMP.
-- [ ] User can open basic TIFF.
-- [ ] User can save PNG.
-- [ ] User can save JPEG.
-- [ ] User can save BMP.
-- [ ] User can save TIFF.
-- [ ] User can zoom in.
-- [ ] User can zoom out.
-- [ ] User can return to actual size.
-- [ ] User can fit image to window.
-- [ ] User can draw rectangle ROI.
-- [ ] User can measure rectangle ROI.
-- [ ] User can measure full image with no ROI.
-- [ ] Results table shows measurement rows.
-- [ ] User can apply invert.
-- [ ] User can apply manual threshold.
-- [ ] User can apply Sobel edge detection.
-- [ ] Core image operations are not implemented inside WinForms event handlers.
+This checklist tracks implemented MVP capabilities. Full manual smoke validation and common-format open/save documentation are tracked separately.
+
+- [x] README states the project vision clearly.
+- [x] ROADMAP defines near-term, mid-term, and long-term goals.
+- [x] App, core, and test projects target .NET Framework 4.8.
+- [x] The solution builds.
+- [x] Core tests pass.
+- [x] App starts without crashing.
+- [x] User can open PNG.
+- [x] User can open JPEG.
+- [x] User can open BMP.
+- [x] User can open basic TIFF.
+- [x] User can save PNG.
+- [x] User can save JPEG.
+- [x] User can save BMP.
+- [x] User can save TIFF.
+- [x] User can zoom in.
+- [x] User can zoom out.
+- [x] User can return to actual size.
+- [x] User can fit image to window.
+- [x] User can draw rectangle ROI.
+- [x] User can resize rectangle ROI.
+- [x] User can measure rectangle ROI.
+- [x] User can measure full image with no ROI.
+- [x] Results table shows measurement rows.
+- [x] User can export measurement results to CSV.
+- [x] User can view a histogram for the full image or rectangle ROI.
+- [x] User can apply invert.
+- [x] User can apply manual threshold.
+- [x] User can apply Sobel edge detection.
+- [x] Core image operations are not implemented inside WinForms event handlers.
 
 ## Known Near-Term Tradeoffs
 
