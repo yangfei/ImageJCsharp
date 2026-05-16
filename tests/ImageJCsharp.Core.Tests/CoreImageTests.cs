@@ -48,6 +48,45 @@ public sealed class CoreImageTests
     }
 
     [Fact]
+    public void GrayImageAllowsPixelAccessAtImageCorners()
+    {
+        var image = GrayImage.FromPixels(3, 2, new ushort[]
+        {
+            1, 2, 3,
+            4, 5, 6
+        });
+
+        Assert.Equal(1, image[0, 0]);
+        Assert.Equal(3, image[2, 0]);
+        Assert.Equal(4, image[0, 1]);
+        Assert.Equal(6, image[2, 1]);
+    }
+
+    [Fact]
+    public void GrayImageRejectsNegativePixelCoordinates()
+    {
+        var image = new GrayImage(3, 2);
+
+        var xException = Assert.Throws<ArgumentOutOfRangeException>(() => image[-1, 0]);
+        var yException = Assert.Throws<ArgumentOutOfRangeException>(() => image[0, -1]);
+
+        Assert.Equal("x", xException.ParamName);
+        Assert.Equal("y", yException.ParamName);
+    }
+
+    [Fact]
+    public void GrayImageRejectsPixelCoordinatesAtOrBeyondImageSize()
+    {
+        var image = new GrayImage(3, 2);
+
+        var xException = Assert.Throws<ArgumentOutOfRangeException>(() => image[3, 0]);
+        var yException = Assert.Throws<ArgumentOutOfRangeException>(() => image[0, 2]);
+
+        Assert.Equal("x", xException.ParamName);
+        Assert.Equal("y", yException.ParamName);
+    }
+
+    [Fact]
     public void MeasureComputesStatisticsInsideRectRoi()
     {
         var image = GrayImage.FromPixels(3, 2, new ushort[]
