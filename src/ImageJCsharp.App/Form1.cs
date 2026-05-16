@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -14,6 +15,8 @@ public partial class Form1 : Form
     private readonly DataGridView _resultsGrid = new DataGridView();
     private readonly StatusStrip _statusStrip = new StatusStrip();
     private readonly ToolStripStatusLabel _statusLabel = new ToolStripStatusLabel();
+    private readonly List<ToolStripMenuItem> _requiresActiveImageItems = new List<ToolStripMenuItem>();
+    private readonly List<ToolStripMenuItem> _requiresResultsItems = new List<ToolStripMenuItem>();
     private ImageDocument? _document;
     private Bitmap? _displayBitmap;
     private RectRoi? _roi;
@@ -42,9 +45,9 @@ public partial class Form1 : Form
 
         var file = AddMenu(menu, "&File");
         AddItem(file, "&Open...", OpenImage, Keys.Control | Keys.O);
-        AddItem(file, "&Save As...", SaveImageAs, Keys.Control | Keys.S);
+        AddActiveImageItem(file, "&Save As...", SaveImageAs, Keys.Control | Keys.S);
         file.DropDownItems.Add(new ToolStripSeparator());
-        AddItem(file, "&Close", CloseImage, Keys.Control | Keys.W);
+        AddActiveImageItem(file, "&Close", CloseImage, Keys.Control | Keys.W);
         AddItem(file, "E&xit", () => Close(), Keys.Alt | Keys.F4);
 
         var edit = AddMenu(menu, "&Edit");
@@ -54,20 +57,20 @@ public partial class Form1 : Form
         AddDisabledItem(image, "No Image commands yet");
 
         var process = AddMenu(menu, "&Process");
-        AddItem(process, "&Invert", ApplyInvert);
-        AddItem(process, "&Find Edges", ApplyFindEdges);
-        AddItem(process, "&Threshold...", ApplyThreshold);
+        AddActiveImageItem(process, "&Invert", ApplyInvert);
+        AddActiveImageItem(process, "&Find Edges", ApplyFindEdges);
+        AddActiveImageItem(process, "&Threshold...", ApplyThreshold);
 
         var analyze = AddMenu(menu, "&Analyze");
-        AddItem(analyze, "&Measure", MeasureCurrentRoi, Keys.Control | Keys.M);
-        AddItem(analyze, "&Histogram", ShowHistogram, shortcutKeyDisplayString: "H");
-        AddItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
+        AddActiveImageItem(analyze, "&Measure", MeasureCurrentRoi, Keys.Control | Keys.M);
+        AddActiveImageItem(analyze, "&Histogram", ShowHistogram, shortcutKeyDisplayString: "H");
+        AddResultsItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
 
         var view = AddMenu(menu, "&View");
-        AddItem(view, "Zoom &In", () => ChangeZoom(1.25), Keys.Control | Keys.Add);
-        AddItem(view, "Zoom &Out", () => ChangeZoom(0.8), Keys.Control | Keys.Subtract);
-        AddItem(view, "&Actual Size", () => SetZoom(1), Keys.Control | Keys.D0);
-        AddItem(view, "&Fit to Window", FitToWindow);
+        AddActiveImageItem(view, "Zoom &In", () => ChangeZoom(1.25), Keys.Control | Keys.Add);
+        AddActiveImageItem(view, "Zoom &Out", () => ChangeZoom(0.8), Keys.Control | Keys.Subtract);
+        AddActiveImageItem(view, "&Actual Size", () => SetZoom(1), Keys.Control | Keys.D0);
+        AddActiveImageItem(view, "&Fit to Window", FitToWindow);
 
         var window = AddMenu(menu, "&Window");
         AddDisabledItem(window, "No Window commands yet");
@@ -103,6 +106,8 @@ public partial class Form1 : Form
 
         _statusStrip.Items.Add(_statusLabel);
         Controls.Add(_statusStrip);
+
+        UpdateCommandStates();
     }
 
     private static ToolStripMenuItem AddMenu(MenuStrip menu, string text)
@@ -112,7 +117,7 @@ public partial class Form1 : Form
         return item;
     }
 
-    private static void AddItem(
+    private static ToolStripMenuItem AddItem(
         ToolStripMenuItem menu,
         string text,
         Action action,
@@ -132,6 +137,27 @@ public partial class Form1 : Form
 
         item.Click += (_, _) => action();
         menu.DropDownItems.Add(item);
+        return item;
+    }
+
+    private void AddActiveImageItem(
+        ToolStripMenuItem menu,
+        string text,
+        Action action,
+        Keys shortcut = Keys.None,
+        string shortcutKeyDisplayString = "")
+    {
+        _requiresActiveImageItems.Add(AddItem(menu, text, action, shortcut, shortcutKeyDisplayString));
+    }
+
+    private void AddResultsItem(
+        ToolStripMenuItem menu,
+        string text,
+        Action action,
+        Keys shortcut = Keys.None,
+        string shortcutKeyDisplayString = "")
+    {
+        _requiresResultsItems.Add(AddItem(menu, text, action, shortcut, shortcutKeyDisplayString));
     }
 
     private static void AddDisabledItem(ToolStripMenuItem menu, string text)
@@ -172,6 +198,7 @@ public partial class Form1 : Form
         _zoom = 1d;
         RefreshDisplay();
         UpdateTitle();
+        UpdateCommandStates();
     }
 
     private void SaveImageAs()
@@ -208,6 +235,7 @@ public partial class Form1 : Form
         _resizeStartRoi = null;
         _activeResizeHandle = RoiResizeHandle.None;
         UpdateTitle();
+        UpdateCommandStates();
     }
 
     private void ApplyInvert()
@@ -275,6 +303,22 @@ public partial class Form1 : Form
             result.Min.ToString("0.###"),
             result.Max.ToString("0.###"),
             result.StandardDeviation.ToString("0.###"));
+        UpdateCommandStates();
+    }
+
+    private void UpdateCommandStates()
+    {
+        var hasActiveImage = _document is not null;
+        foreach (var item in _requiresActiveImageItems)
+        {
+            item.Enabled = hasActiveImage;
+        }
+
+        var hasResults = _resultsGrid.Rows.Cast<DataGridViewRow>().Any(row => !row.IsNewRow);
+        foreach (var item in _requiresResultsItems)
+        {
+            item.Enabled = hasResults;
+        }
     }
 
     private void ShowHistogram()
