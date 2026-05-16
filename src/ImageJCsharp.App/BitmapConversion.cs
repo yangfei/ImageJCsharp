@@ -50,6 +50,28 @@ public static class BitmapConversion
         return bitmap;
     }
 
+    public static Bitmap ToBitmap(GrayImage image, DisplayAdjustment adjustment)
+    {
+        if (image is null)
+        {
+            throw new ArgumentNullException(nameof(image));
+        }
+
+        var bitmap = new Bitmap(image.Width, image.Height, PixelFormat.Format24bppRgb);
+        var range = adjustment.Maximum - adjustment.Minimum;
+        for (var y = 0; y < image.Height; y++)
+        {
+            for (var x = 0; x < image.Width; x++)
+            {
+                var normalized = (image[x, y] - adjustment.Minimum) / (double)range;
+                var value = (int)Math.Max(0, Math.Min(255, Math.Round(normalized * 255)));
+                bitmap.SetPixel(x, y, Color.FromArgb(value, value, value));
+            }
+        }
+
+        return bitmap;
+    }
+
     private static ushort FindMaximum(GrayImage image)
     {
         ushort max = 0;
