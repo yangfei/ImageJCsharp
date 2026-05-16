@@ -20,6 +20,12 @@ The long-term target is:
 See [ROADMAP.md](ROADMAP.md) for the staged near-term, mid-term, and long-term plan.
 See [docs/near-term-plan.md](docs/near-term-plan.md) for the detailed near-term MVP checklist.
 
+## Screenshot
+
+![ImageJCsharp main window showing a sample image with a rectangle ROI and resize handles](docs/images/imagejcsharp-main-window.png)
+
+Current MVP shell showing a sample grayscale image, rectangle ROI resize handles, the ImageJ-like top-level menu structure, and the measurement results area.
+
 ## Project Positioning
 
 ImageJCsharp is intended to be:
