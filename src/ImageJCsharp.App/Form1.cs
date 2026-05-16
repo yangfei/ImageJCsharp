@@ -19,6 +19,7 @@ public partial class Form1 : Form
     private readonly List<ToolStripMenuItem> _requiresResultsItems = new List<ToolStripMenuItem>();
     private const string NoImageStatusText = "No image";
     private MeasurementOptions _measurementOptions = MeasurementOptions.Default;
+    private DisplayAdjustment? _displayAdjustment;
     private ImageDocument? _document;
     private Bitmap? _displayBitmap;
     private RectRoi? _roi;
@@ -56,7 +57,8 @@ public partial class Form1 : Form
         AddDisabledItem(edit, "No Edit commands yet");
 
         var image = AddMenu(menu, "&Image");
-        AddDisabledItem(image, "No Image commands yet");
+        AddActiveImageItem(image, "&Brightness/Contrast...", AdjustBrightnessContrast);
+        AddActiveImageItem(image, "&Reset Display", ResetDisplayAdjustment);
 
         var process = AddMenu(menu, "&Process");
         AddActiveImageItem(process, "&Invert", ApplyInvert);
@@ -195,6 +197,7 @@ public partial class Form1 : Form
         using var bitmap = new Bitmap(dialog.FileName);
         _document = new ImageDocument(dialog.FileName, BitmapConversion.ToGrayImage(bitmap));
         _roi = null;
+        _displayAdjustment = null;
         _zoom = 1d;
         RefreshDisplay();
         UpdateTitle();
@@ -228,6 +231,7 @@ public partial class Form1 : Form
     {
         _document = null;
         _roi = null;
+        _displayAdjustment = null;
         _displayBitmap?.Dispose();
         _displayBitmap = null;
         _imageBox.Image = null;
@@ -483,7 +487,9 @@ public partial class Form1 : Form
         }
 
         _displayBitmap?.Dispose();
-        _displayBitmap = BitmapConversion.ToBitmap(_document.Image);
+        _displayBitmap = _displayAdjustment is null
+            ? BitmapConversion.ToBitmap(_document.Image)
+            : BitmapConversion.ToBitmap(_document.Image, _displayAdjustment.Value);
         _imageBox.Image = _displayBitmap;
         ResizeImageBox();
         _imageBox.Invalidate();
@@ -529,6 +535,42 @@ public partial class Form1 : Form
         var zoomX = (double)_imagePanel.ClientSize.Width / _document.Image.Width;
         var zoomY = (double)_imagePanel.ClientSize.Height / _document.Image.Height;
         SetZoom(Math.Min(zoomX, zoomY));
+    }
+
+    private void AdjustBrightnessContrast()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        var currentMinimum = _displayAdjustment?.Minimum ?? (ushort)0;
+        var currentMaximum = _displayAdjustment?.Maximum ?? (ushort)255;
+        var minimumText = Prompt("Display minimum", currentMinimum.ToString());
+        if (!ushort.TryParse(minimumText, out var minimum))
+        {
+            return;
+        }
+
+        var maximumText = Prompt("Display maximum", currentMaximum.ToString());
+        if (!ushort.TryParse(maximumText, out var maximum) || minimum >= maximum)
+        {
+            return;
+        }
+
+        _displayAdjustment = new DisplayAdjustment(minimum, maximum);
+        RefreshDisplay();
+    }
+
+    private void ResetDisplayAdjustment()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        _displayAdjustment = null;
+        RefreshDisplay();
     }
 
     private void ImageBoxMouseDown(object? sender, MouseEventArgs e)
