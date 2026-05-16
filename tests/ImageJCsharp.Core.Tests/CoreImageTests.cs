@@ -18,6 +18,36 @@ public sealed class CoreImageTests
     }
 
     [Fact]
+    public void GrayImageCopiesPixelsInRowMajorOrder()
+    {
+        var image = GrayImage.FromPixels(3, 2, new ushort[]
+        {
+            1, 2, 3,
+            4, 5, 6
+        });
+
+        var pixels = image.CopyPixels();
+
+        Assert.Equal(new ushort[]
+        {
+            1, 2, 3,
+            4, 5, 6
+        }, pixels);
+    }
+
+    [Fact]
+    public void GrayImageCopyPixelsDoesNotExposeInternalBuffer()
+    {
+        var image = GrayImage.FromPixels(2, 1, new ushort[] { 10, 20 });
+
+        var pixels = image.CopyPixels();
+        pixels[0] = 99;
+
+        Assert.Equal(10, image[0, 0]);
+        Assert.Equal(new ushort[] { 10, 20 }, image.CopyPixels());
+    }
+
+    [Fact]
     public void MeasureComputesStatisticsInsideRectRoi()
     {
         var image = GrayImage.FromPixels(3, 2, new ushort[]
