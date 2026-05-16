@@ -155,6 +155,7 @@ Required goals:
 
 - Rectangle ROI creation by mouse drag.
 - Rectangle ROI display overlay.
+- Rectangle ROI resize handles.
 - Clamp ROI to image bounds.
 - Measure full image when no ROI exists.
 
@@ -297,6 +298,9 @@ This checklist tracks implemented MVP capabilities. Full manual smoke validation
 - [x] The solution builds.
 - [x] Core tests pass.
 - [x] App starts without crashing.
+- [x] App has File, Edit, Image, Process, Analyze, View, Window, and Help top-level menus.
+- [x] Commands that require an active image are disabled when no image is active.
+- [x] Status bar clearly reports no-image state.
 - [x] User can open PNG.
 - [x] User can open JPEG.
 - [x] User can open BMP.
@@ -305,10 +309,12 @@ This checklist tracks implemented MVP capabilities. Full manual smoke validation
 - [x] User can save JPEG.
 - [x] User can save BMP.
 - [x] User can save TIFF.
+- [x] User can close the current image cleanly.
 - [x] User can zoom in.
 - [x] User can zoom out.
 - [x] User can return to actual size.
 - [x] User can fit image to window.
+- [x] Status bar shows image size and zoom level during common view operations.
 - [x] User can draw rectangle ROI.
 - [x] User can resize rectangle ROI.
 - [x] User can measure rectangle ROI.
@@ -319,6 +325,9 @@ This checklist tracks implemented MVP capabilities. Full manual smoke validation
 - [x] User can apply invert.
 - [x] User can apply manual threshold.
 - [x] User can apply Sobel edge detection.
+- [x] GrayImage pixel buffer copy behavior is covered by automated tests.
+- [x] GrayImage bounds checking is covered by automated tests.
+- [x] Threshold-to-binary boundary behavior is covered by automated tests.
 - [x] Core image operations are not implemented inside WinForms event handlers.
 
 ## Known Near-Term Tradeoffs
@@ -327,7 +336,7 @@ This checklist tracks implemented MVP capabilities. Full manual smoke validation
 - Single-document UI is accepted for the first usable shell.
 - Rectangle ROI only is accepted until measurement flow is stable.
 - Basic TIFF support through platform image codecs is accepted.
-- UI tests are deferred; core tests are required.
+- Broad UI automation is deferred; focused App tests cover startup and current command-sensitive behavior.
 - Plugin loading is deferred; command-oriented structure is still required.
 
 ## Near-Term Exit Criteria

@@ -86,7 +86,8 @@ The first implementation focuses on features that are highly feasible and low ri
 ### ROI
 
 - Rectangle ROI.
-- Move and resize support in later MVP iterations.
+- Rectangle ROI resize handles.
+- ROI move support is planned after the rectangle create/resize workflow is stable.
 - Oval, line, polygon, and freehand ROI are planned after the rectangle workflow is stable.
 
 ### Analyze
@@ -198,11 +199,14 @@ Implemented or in progress:
 - Core grayscale image model.
 - Rectangle ROI model.
 - Rectangle ROI resize handles.
+- Minimum ImageJ-like top-level menu structure.
+- Clean no-image command state for implemented menu commands.
+- Status bar reporting for no-image, image size, and zoom state.
 - Basic measurement model.
 - Measurement results CSV export.
 - Histogram calculation and a basic histogram window.
 - Threshold, invert, and Sobel edge processing.
-- Initial WinForms application shell.
+- WinForms application shell.
 - Focused core and app tests for current MVP behavior.
 
 ## Name
