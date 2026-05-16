@@ -56,7 +56,7 @@ Target: cover the majority of everyday ImageJ 1.x usage without Java plugin comp
 - Add ROI Manager.
 - Add measurement configuration.
 - Improve results table operations and export.
-- Add histogram and profile plotting.
+- Add profile plotting and further histogram refinements.
 - Add common ImageJ menu commands in File, Edit, Image, Process, Analyze, and Window.
 - Support image stacks for common workflows.
 - Add a minimal C# plugin SDK.
@@ -69,7 +69,6 @@ Target: cover the majority of everyday ImageJ 1.x usage without Java plugin comp
 - Basic freehand ROI.
 - Move, resize, duplicate, and delete ROI.
 - Set Scale and physical unit calibration.
-- Histogram.
 - Plot Profile.
 - Brightness and contrast display adjustment.
 - Crop, duplicate, resize, rotate, flip.

@@ -59,6 +59,7 @@ The MVP should cover the most common ImageJ workflows:
 - Draw basic ROI selections.
 - Measure area, mean, min, max, and standard deviation.
 - Display and export measurement results.
+- View histogram statistics for the full image or active rectangle ROI.
 - Adjust simple image data through core processing commands.
 - Run thresholding and binary conversion.
 - Run basic filters such as invert and edge detection.
@@ -196,9 +197,13 @@ Implemented or in progress:
 - .NET Framework 4.8 project targets.
 - Core grayscale image model.
 - Rectangle ROI model.
+- Rectangle ROI resize handles.
 - Basic measurement model.
+- Measurement results CSV export.
+- Histogram calculation and a basic histogram window.
 - Threshold, invert, and Sobel edge processing.
 - Initial WinForms application shell.
+- Focused core and app tests for current MVP behavior.
 
 ## Name
 
