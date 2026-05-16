@@ -232,6 +232,8 @@ public partial class Form1 : Form
         _displayBitmap = null;
         _imageBox.Image = null;
         _imageBox.Size = Size.Empty;
+        _imageBox.Invalidate();
+        _statusLabel.Text = string.Empty;
         _resizeStartRoi = null;
         _activeResizeHandle = RoiResizeHandle.None;
         UpdateTitle();
