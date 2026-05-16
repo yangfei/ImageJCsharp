@@ -58,6 +58,7 @@ public partial class Form1 : Form
 
         var analyze = AddMenu(menu, "&Analyze");
         AddItem(analyze, "&Measure", MeasureCurrentRoi, Keys.Control | Keys.M);
+        AddItem(analyze, "&Histogram", ShowHistogram, Keys.H);
         AddItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
 
         _imagePanel.Dock = DockStyle.Fill;
@@ -224,6 +225,21 @@ public partial class Form1 : Form
             result.Min.ToString("0.###"),
             result.Max.ToString("0.###"),
             result.StandardDeviation.ToString("0.###"));
+    }
+
+    private void ShowHistogram()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        var histogram = _roi is null
+            ? Histogram.Calculate(_document.Image)
+            : Histogram.Calculate(_document.Image, _roi.Value);
+
+        var form = new HistogramForm(_document.DisplayName, histogram);
+        form.Show(this);
     }
 
     private void ExportResults()
