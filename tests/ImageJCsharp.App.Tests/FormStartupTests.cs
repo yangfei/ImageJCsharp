@@ -164,6 +164,31 @@ public sealed class FormStartupTests
         Assert.StartsWith("2 x 2  Zoom: ", fitToWindowStatus);
     }
 
+    [Fact]
+    public void MeasureCurrentRoiUsesDocumentCalibration()
+    {
+        string? area = null;
+        string? unit = null;
+
+        var capturedException = RunOnStaThread(() =>
+        {
+            using var form = new Form1();
+            LoadTestImage(form);
+            var document = GetPrivateField<ImageDocument>(form, "_document");
+            document.Calibration = new PixelCalibration(0.5, 2, "um");
+
+            InvokePrivateMethod(form, "MeasureCurrentRoi");
+
+            var grid = GetPrivateField<DataGridView>(form, "_resultsGrid");
+            area = Convert.ToString(grid.Rows[0].Cells["Area"].Value);
+            unit = Convert.ToString(grid.Rows[0].Cells["Unit"].Value);
+        });
+
+        Assert.Null(capturedException);
+        Assert.Equal("1", area);
+        Assert.Equal("um", unit);
+    }
+
     private static Exception? RunOnStaThread(Action action)
     {
         Exception? capturedException = null;
