@@ -68,6 +68,7 @@ public partial class Form1 : Form
         var analyze = AddMenu(menu, "&Analyze");
         AddActiveImageItem(analyze, "&Measure", MeasureCurrentRoi, Keys.Control | Keys.M);
         AddActiveImageItem(analyze, "&Histogram", ShowHistogram, shortcutKeyDisplayString: "H");
+        AddActiveImageItem(analyze, "Plot &Profile", ShowProfile);
         AddActiveImageItem(analyze, "Set &Scale...", SetScale);
         AddItem(analyze, "Set &Measurements...", SetMeasurements);
         AddResultsItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
@@ -442,6 +443,21 @@ public partial class Form1 : Form
             : Histogram.Calculate(_document.Image, _roi.Value);
 
         var form = new HistogramForm(_document.DisplayName, histogram);
+        form.Show(this);
+    }
+
+    private void ShowProfile()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        var profile = _roi is null
+            ? Profile.HorizontalCenterLine(_document.Image)
+            : Profile.HorizontalCenterLine(_document.Image, _roi.Value);
+
+        var form = new ProfileForm(_document.DisplayName, profile);
         form.Show(this);
     }
 

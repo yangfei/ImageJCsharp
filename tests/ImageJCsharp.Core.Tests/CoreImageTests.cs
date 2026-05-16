@@ -240,4 +240,35 @@ public sealed class CoreImageTests
 
         Assert.Contains("8-bit", exception.Message);
     }
+
+    [Fact]
+    public void ProfileUsesHorizontalCenterLineOfImage()
+    {
+        var image = GrayImage.FromPixels(3, 3, new ushort[]
+        {
+            1, 2, 3,
+            4, 5, 6,
+            7, 8, 9
+        });
+
+        var profile = Profile.HorizontalCenterLine(image);
+
+        Assert.Equal(new ushort[] { 4, 5, 6 }, profile.Values);
+    }
+
+    [Fact]
+    public void ProfileUsesHorizontalCenterLineOfRectRoi()
+    {
+        var image = GrayImage.FromPixels(4, 4, new ushort[]
+        {
+            1, 2, 3, 4,
+            5, 6, 7, 8,
+            9, 10, 11, 12,
+            13, 14, 15, 16
+        });
+
+        var profile = Profile.HorizontalCenterLine(image, new RectRoi(1, 1, 2, 2));
+
+        Assert.Equal(new ushort[] { 10, 11 }, profile.Values);
+    }
 }
