@@ -160,6 +160,7 @@ The planned direction is:
 - Prefer tested core behavior over UI-only behavior.
 - Keep algorithms in the core library.
 - Keep UI code focused on interaction and presentation.
+- Prefer fast failure over unclear fallback behavior.
 - Avoid promising ImageJ compatibility that is not yet tested.
 - Add features incrementally, with clear acceptance criteria.
 

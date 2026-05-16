@@ -38,3 +38,10 @@ Desktop.ini
 
 ## Local Codex memory and agent state
 .codex/
+
+## Local AI assistant configuration
+AGENTS.md
+CLAUDE.md
+.cursorrules
+.cursor/
+.claude/

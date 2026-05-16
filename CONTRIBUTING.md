@@ -91,6 +91,21 @@ A good pull request should:
 - Do not introduce large dependencies without discussion.
 - Do not add plugin infrastructure before the command path is stable.
 
+## Fast-Fail Development Principle
+
+ImageJCsharp follows a fast-fail principle, especially during the MVP stage.
+
+- Prefer simple, explicit behavior over broad fallback behavior.
+- Do not add compatibility layers for unclear future requirements.
+- Do not silently swallow errors that would help diagnose a problem.
+- Avoid hidden automatic correction unless the requirement explicitly asks for it.
+- If input is invalid, fail clearly with an understandable error.
+- If a feature is not implemented, say so or leave it out rather than pretending partial support.
+- Do not build generalized abstractions before repeated real needs appear.
+- Do not add defensive complexity for imaginary callers.
+
+This keeps bugs easier to reproduce and helps preserve trust in scientific image processing results.
+
 ## Testing Guidelines
 
 Core behavior should be tested.
