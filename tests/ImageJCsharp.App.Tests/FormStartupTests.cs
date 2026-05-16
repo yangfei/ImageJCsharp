@@ -1,5 +1,6 @@
 using ImageJCsharp.App;
 using ImageJCsharp.Core;
+using System.ComponentModel;
 using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
@@ -253,6 +254,38 @@ public sealed class FormStartupTests
         Assert.Equal(new[] { "close-smoke.png", "1", "pixel", "10" }, values);
     }
 
+    [Fact]
+    public void RoiManagerCanStoreAndRestoreCurrentRoi()
+    {
+        int? managedCount = null;
+        RectRoi? restoredRoi = null;
+        RoiShape? restoredShape = null;
+
+        var capturedException = RunOnStaThread(() =>
+        {
+            using var form = new Form1();
+            LoadTestImage(form);
+            SetPrivateField<RectRoi?>(form, "_roi", new RectRoi(2, 3, 4, 5));
+            SetPrivateField(form, "_roiShape", RoiShape.Oval);
+
+            InvokePrivateMethod(form, "AddCurrentRoiToManager");
+            var managedRois = GetPrivateField<BindingList<ManagedRoi>>(form, "_managedRois");
+            managedCount = managedRois.Count;
+
+            SetPrivateField<RectRoi?>(form, "_roi", null);
+            SetPrivateField(form, "_roiShape", RoiShape.Rectangle);
+            InvokePrivateMethod(form, "SelectManagedRoi", managedRois[0]);
+
+            restoredRoi = GetPrivateField<RectRoi?>(form, "_roi");
+            restoredShape = GetPrivateField<RoiShape>(form, "_roiShape");
+        });
+
+        Assert.Null(capturedException);
+        Assert.Equal(1, managedCount);
+        Assert.Equal(RoiShape.Oval, restoredShape);
+        Assert.Equal(new RectRoi(2, 3, 4, 5), restoredRoi);
+    }
+
     private static Exception? RunOnStaThread(Action action)
     {
         Exception? capturedException = null;
@@ -331,10 +364,10 @@ public sealed class FormStartupTests
         field.SetValue(form, value);
     }
 
-    private static void InvokePrivateMethod(Form1 form, string methodName)
+    private static void InvokePrivateMethod(Form1 form, string methodName, params object?[] parameters)
     {
         var method = typeof(Form1).GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)
             ?? throw new InvalidOperationException($"Method '{methodName}' was not found.");
-        method.Invoke(form, null);
+        method.Invoke(form, parameters);
     }
 }
