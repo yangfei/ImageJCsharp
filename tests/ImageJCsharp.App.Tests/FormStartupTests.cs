@@ -1,4 +1,7 @@
 using ImageJCsharp.App;
+using ImageJCsharp.Core;
+using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace ImageJCsharp.App.Tests;
@@ -71,6 +74,55 @@ public sealed class FormStartupTests
         }
     }
 
+    [Fact]
+    public void FileCloseClearsActiveImageState()
+    {
+        string? title = null;
+        string? statusText = null;
+        bool? imageCleared = null;
+        bool? imageBoxSizeCleared = null;
+        bool? roiCleared = null;
+        bool? closeDisabledAfterClose = null;
+        Exception? noImageCommandException = null;
+
+        var capturedException = RunOnStaThread(() =>
+        {
+            using var form = new Form1();
+            LoadTestImage(form);
+
+            FindMenuItem(form, "File", "Close").PerformClick();
+
+            title = form.Text;
+            statusText = GetStatusText(form);
+            imageCleared = GetImageBox(form).Image is null;
+            imageBoxSizeCleared = GetImageBox(form).Size == Size.Empty;
+            roiCleared = GetPrivateField<RectRoi?>(form, "_roi") is null;
+            closeDisabledAfterClose = !FindMenuItem(form, "File", "Close").Enabled;
+
+            try
+            {
+                InvokePrivateMethod(form, "CloseImage");
+                InvokePrivateMethod(form, "ApplyInvert");
+                InvokePrivateMethod(form, "ApplyFindEdges");
+                InvokePrivateMethod(form, "MeasureCurrentRoi");
+                InvokePrivateMethod(form, "ShowHistogram");
+            }
+            catch (Exception exception)
+            {
+                noImageCommandException = exception;
+            }
+        });
+
+        Assert.Null(capturedException);
+        Assert.Null(noImageCommandException);
+        Assert.Equal("ImageJCsharp", title);
+        Assert.Equal(string.Empty, statusText);
+        Assert.True(imageCleared);
+        Assert.True(imageBoxSizeCleared);
+        Assert.True(roiCleared);
+        Assert.True(closeDisabledAfterClose);
+    }
+
     private static Exception? RunOnStaThread(Action action)
     {
         Exception? capturedException = null;
@@ -108,5 +160,51 @@ public sealed class FormStartupTests
     private static string NormalizeMenuText(string text)
     {
         return text.Replace("&", string.Empty);
+    }
+
+    private static void LoadTestImage(Form1 form)
+    {
+        var image = new GrayImage(2, 2);
+        image[0, 0] = 10;
+        image[1, 0] = 20;
+        image[0, 1] = 30;
+        image[1, 1] = 40;
+
+        SetPrivateField(form, "_document", new ImageDocument("close-smoke.png", image));
+        SetPrivateField<RectRoi?>(form, "_roi", new RectRoi(0, 0, 1, 1));
+        InvokePrivateMethod(form, "RefreshDisplay");
+        InvokePrivateMethod(form, "UpdateTitle");
+        InvokePrivateMethod(form, "UpdateCommandStates");
+    }
+
+    private static PictureBox GetImageBox(Form1 form)
+    {
+        return GetPrivateField<PictureBox>(form, "_imageBox");
+    }
+
+    private static string GetStatusText(Form1 form)
+    {
+        return GetPrivateField<ToolStripStatusLabel>(form, "_statusLabel").Text;
+    }
+
+    private static T GetPrivateField<T>(Form1 form, string fieldName)
+    {
+        var field = typeof(Form1).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException($"Field '{fieldName}' was not found.");
+        return (T)field.GetValue(form)!;
+    }
+
+    private static void SetPrivateField<T>(Form1 form, string fieldName, T value)
+    {
+        var field = typeof(Form1).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException($"Field '{fieldName}' was not found.");
+        field.SetValue(form, value);
+    }
+
+    private static void InvokePrivateMethod(Form1 form, string methodName)
+    {
+        var method = typeof(Form1).GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException($"Method '{methodName}' was not found.");
+        method.Invoke(form, null);
     }
 }
