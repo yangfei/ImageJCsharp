@@ -23,6 +23,7 @@ public partial class Form1 : Form
     private ImageDocument? _document;
     private Bitmap? _displayBitmap;
     private RectRoi? _roi;
+    private LineRoi? _lineRoi;
     private RoiShape _roiShape = RoiShape.Rectangle;
     private RoiShape _selectionTool = RoiShape.Rectangle;
     private Point? _dragStartImagePoint;
@@ -58,6 +59,7 @@ public partial class Form1 : Form
         var edit = AddMenu(menu, "&Edit");
         AddItem(edit, "&Rectangle Selection", () => _selectionTool = RoiShape.Rectangle);
         AddItem(edit, "&Oval Selection", () => _selectionTool = RoiShape.Oval);
+        AddItem(edit, "&Line Selection", () => _selectionTool = RoiShape.Line);
 
         var image = AddMenu(menu, "&Image");
         AddActiveImageItem(image, "&Brightness/Contrast...", AdjustBrightnessContrast);
@@ -201,6 +203,7 @@ public partial class Form1 : Form
         using var bitmap = new Bitmap(dialog.FileName);
         _document = new ImageDocument(dialog.FileName, BitmapConversion.ToGrayImage(bitmap));
         _roi = null;
+        _lineRoi = null;
         _roiShape = RoiShape.Rectangle;
         _displayAdjustment = null;
         _zoom = 1d;
@@ -236,6 +239,7 @@ public partial class Form1 : Form
     {
         _document = null;
         _roi = null;
+        _lineRoi = null;
         _roiShape = RoiShape.Rectangle;
         _displayAdjustment = null;
         _displayBitmap?.Dispose();
@@ -293,6 +297,12 @@ public partial class Form1 : Form
     {
         if (_document is null)
         {
+            return;
+        }
+
+        if (_lineRoi is not null)
+        {
+            MessageBox.Show(this, "Measure currently supports full image, rectangle ROI, and oval ROI selections. Use Plot Profile for line ROI intensity values.", "Unsupported ROI", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
@@ -445,6 +455,12 @@ public partial class Form1 : Form
             return;
         }
 
+        if (_lineRoi is not null)
+        {
+            MessageBox.Show(this, "Histogram currently supports full image or rectangle ROI selections.", "Unsupported ROI", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
         var histogram = _roi is null
             ? Histogram.Calculate(_document.Image)
             : _roiShape == RoiShape.Rectangle
@@ -468,11 +484,13 @@ public partial class Form1 : Form
             return;
         }
 
-        var profile = _roi is null
-            ? Profile.HorizontalCenterLine(_document.Image)
-            : _roiShape == RoiShape.Rectangle
-                ? Profile.HorizontalCenterLine(_document.Image, _roi.Value)
-                : null;
+        var profile = _lineRoi is not null
+            ? Profile.Line(_document.Image, _lineRoi.Value)
+            : _roi is null
+                ? Profile.HorizontalCenterLine(_document.Image)
+                : _roiShape == RoiShape.Rectangle
+                    ? Profile.HorizontalCenterLine(_document.Image, _roi.Value)
+                    : null;
 
         if (profile is null)
         {
@@ -620,6 +638,15 @@ public partial class Form1 : Form
         }
 
         _dragStartImagePoint = ToImagePoint(e.Location);
+        if (_selectionTool == RoiShape.Line)
+        {
+            _roi = null;
+            _roiShape = RoiShape.Line;
+            _lineRoi = new LineRoi(_dragStartImagePoint.Value.X, _dragStartImagePoint.Value.Y, _dragStartImagePoint.Value.X, _dragStartImagePoint.Value.Y);
+            _imageBox.Invalidate();
+            return;
+        }
+
         _activeResizeHandle = _roi is null
             ? RoiResizeHandle.None
             : RoiResizeInteraction.HitTestHandle(_roi.Value, e.Location, _zoom);
@@ -627,6 +654,7 @@ public partial class Form1 : Form
         if (_activeResizeHandle == RoiResizeHandle.None)
         {
             _resizeStartRoi = null;
+            _lineRoi = null;
             _roiShape = _selectionTool;
             _roi = new RectRoi(_dragStartImagePoint.Value.X, _dragStartImagePoint.Value.Y, 1, 1);
         }
@@ -647,7 +675,12 @@ public partial class Form1 : Form
 
         if (_dragStartImagePoint is not null)
         {
-            if (_activeResizeHandle == RoiResizeHandle.None)
+            if (_lineRoi is not null)
+            {
+                var end = ToImagePoint(e.Location);
+                _lineRoi = new LineRoi(_dragStartImagePoint.Value.X, _dragStartImagePoint.Value.Y, end.X, end.Y);
+            }
+            else if (_activeResizeHandle == RoiResizeHandle.None)
             {
                 _roi = CreateRoi(_dragStartImagePoint.Value, ToImagePoint(e.Location), _document.Image.Width, _document.Image.Height);
             }
@@ -678,13 +711,24 @@ public partial class Form1 : Form
 
     private void ImageBoxPaint(object? sender, PaintEventArgs e)
     {
+        using var pen = new Pen(Color.Yellow, 1);
+        if (_lineRoi is not null)
+        {
+            e.Graphics.DrawLine(
+                pen,
+                (float)(_lineRoi.Value.X1 * _zoom),
+                (float)(_lineRoi.Value.Y1 * _zoom),
+                (float)(_lineRoi.Value.X2 * _zoom),
+                (float)(_lineRoi.Value.Y2 * _zoom));
+            return;
+        }
+
         if (_roi is null)
         {
             return;
         }
 
         var roi = _roi.Value;
-        using var pen = new Pen(Color.Yellow, 1);
         var bounds = new RectangleF(
             (float)(roi.X * _zoom),
             (float)(roi.Y * _zoom),
@@ -724,7 +768,7 @@ public partial class Form1 : Form
 
     private void UpdateImageBoxCursor(Point controlPoint)
     {
-        if (_roi is null)
+        if (_selectionTool == RoiShape.Line || _roi is null)
         {
             _imageBox.Cursor = Cursors.Cross;
             return;

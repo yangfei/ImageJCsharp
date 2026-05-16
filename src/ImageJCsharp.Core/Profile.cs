@@ -50,4 +50,50 @@ public static class Profile
 
         return new ProfileResult(values);
     }
+
+    public static ProfileResult Line(GrayImage image, LineRoi roi)
+    {
+        if (image is null)
+        {
+            throw new ArgumentNullException(nameof(image));
+        }
+
+        var values = new System.Collections.Generic.List<ushort>();
+        var x = roi.X1;
+        var y = roi.Y1;
+        var dx = Math.Abs(roi.X2 - roi.X1);
+        var sx = roi.X1 < roi.X2 ? 1 : -1;
+        var dy = -Math.Abs(roi.Y2 - roi.Y1);
+        var sy = roi.Y1 < roi.Y2 ? 1 : -1;
+        var error = dx + dy;
+
+        while (true)
+        {
+            if ((uint)x >= (uint)image.Width || (uint)y >= (uint)image.Height)
+            {
+                throw new ArgumentOutOfRangeException(nameof(roi), "Line ROI must be inside the image bounds.");
+            }
+
+            values.Add(image[x, y]);
+            if (x == roi.X2 && y == roi.Y2)
+            {
+                break;
+            }
+
+            var doubledError = 2 * error;
+            if (doubledError >= dy)
+            {
+                error += dy;
+                x += sx;
+            }
+
+            if (doubledError <= dx)
+            {
+                error += dx;
+                y += sy;
+            }
+        }
+
+        return new ProfileResult(values.ToArray());
+    }
 }
