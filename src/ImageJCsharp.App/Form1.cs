@@ -65,6 +65,7 @@ public partial class Form1 : Form
         var analyze = AddMenu(menu, "&Analyze");
         AddActiveImageItem(analyze, "&Measure", MeasureCurrentRoi, Keys.Control | Keys.M);
         AddActiveImageItem(analyze, "&Histogram", ShowHistogram, shortcutKeyDisplayString: "H");
+        AddActiveImageItem(analyze, "Set &Scale...", SetScale);
         AddResultsItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
 
         var view = AddMenu(menu, "&View");
@@ -99,6 +100,7 @@ public partial class Form1 : Form
         _resultsGrid.RowHeadersVisible = false;
         _resultsGrid.Columns.Add("Name", "Name");
         _resultsGrid.Columns.Add("Area", "Area");
+        _resultsGrid.Columns.Add("Unit", "Unit");
         _resultsGrid.Columns.Add("Mean", "Mean");
         _resultsGrid.Columns.Add("Min", "Min");
         _resultsGrid.Columns.Add("Max", "Max");
@@ -289,15 +291,45 @@ public partial class Form1 : Form
         }
 
         var roi = _roi ?? new RectRoi(0, 0, _document.Image.Width, _document.Image.Height);
-        var result = Measurements.Measure(_document.Image, roi, PixelCalibration.Identity);
+        var result = Measurements.Measure(_document.Image, roi, _document.Calibration);
         _resultsGrid.Rows.Add(
             _document.DisplayName,
             result.Area.ToString("0.###"),
+            _document.Calibration.Unit,
             result.Mean.ToString("0.###"),
             result.Min.ToString("0.###"),
             result.Max.ToString("0.###"),
             result.StandardDeviation.ToString("0.###"));
         UpdateCommandStates();
+    }
+
+    private void SetScale()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        var widthText = Prompt("Pixel width", _document.Calibration.PixelWidth.ToString("0.###"));
+        if (!double.TryParse(widthText, out var pixelWidth) || pixelWidth <= 0)
+        {
+            return;
+        }
+
+        var heightText = Prompt("Pixel height", _document.Calibration.PixelHeight.ToString("0.###"));
+        if (!double.TryParse(heightText, out var pixelHeight) || pixelHeight <= 0)
+        {
+            return;
+        }
+
+        var unit = Prompt("Unit", _document.Calibration.Unit);
+        if (string.IsNullOrWhiteSpace(unit))
+        {
+            return;
+        }
+
+        _document.Calibration = new PixelCalibration(pixelWidth, pixelHeight, unit.Trim());
+        _statusLabel.Text = $"Scale: {pixelWidth:0.###} x {pixelHeight:0.###} {unit.Trim()}/pixel";
     }
 
     private void UpdateCommandStates()

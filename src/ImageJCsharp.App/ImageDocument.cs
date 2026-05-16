@@ -18,4 +18,6 @@ public sealed class ImageDocument
     public string DisplayName { get; }
 
     public GrayImage Image { get; set; }
+
+    public PixelCalibration Calibration { get; set; } = PixelCalibration.Identity;
 }

@@ -105,6 +105,22 @@ public sealed class CoreImageTests
     }
 
     [Fact]
+    public void MeasureUsesPixelCalibrationForArea()
+    {
+        var image = GrayImage.FromPixels(2, 2, new ushort[]
+        {
+            1, 2,
+            3, 4
+        });
+        var calibration = new PixelCalibration(0.5, 2, "um");
+
+        var result = Measurements.Measure(image, new RectRoi(0, 0, 2, 2), calibration);
+
+        Assert.Equal(4, result.PixelCount);
+        Assert.Equal(4, result.Area);
+    }
+
+    [Fact]
     public void ThresholdCreatesBinaryMask()
     {
         var image = GrayImage.FromPixels(3, 1, new ushort[] { 4, 5, 6 });
