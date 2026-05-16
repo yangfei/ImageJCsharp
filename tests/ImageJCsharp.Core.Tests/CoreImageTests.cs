@@ -117,6 +117,20 @@ public sealed class CoreImageTests
     }
 
     [Fact]
+    public void ThresholdIncludesMinimumAndMaximumBoundaryValues()
+    {
+        var image = GrayImage.FromPixels(5, 1, new ushort[] { 9, 10, 15, 20, 21 });
+
+        var binary = ImageProcessor.Threshold(image, 10, 20);
+
+        Assert.False(binary[0, 0]);
+        Assert.True(binary[1, 0]);
+        Assert.True(binary[2, 0]);
+        Assert.True(binary[3, 0]);
+        Assert.False(binary[4, 0]);
+    }
+
+    [Fact]
     public void InvertFlipsAgainstImageMaximum()
     {
         var image = GrayImage.FromPixels(3, 1, new ushort[] { 0, 100, 255 });
