@@ -73,6 +73,10 @@ public partial class Form1 : Form
         AddActiveImageItem(process, "&Gaussian Blur", ApplyGaussianBlur);
         AddActiveImageItem(process, "&Median", ApplyMedianFilter);
         AddActiveImageItem(process, "&Sharpen", ApplySharpen);
+        AddActiveImageItem(process, "&Erode", ApplyErode);
+        AddActiveImageItem(process, "&Dilate", ApplyDilate);
+        AddActiveImageItem(process, "&Open", ApplyOpen);
+        AddActiveImageItem(process, "&Close", ApplyClose);
         AddActiveImageItem(process, "&Threshold...", ApplyThreshold);
 
         var analyze = AddMenu(menu, "&Analyze");
@@ -315,6 +319,45 @@ public partial class Form1 : Form
 
         _document.Image = ImageProcessor.Sharpen(_document.Image);
         RefreshDisplay();
+    }
+
+    private void ApplyErode()
+    {
+        ApplyBinaryMorphology(ImageProcessor.Erode);
+    }
+
+    private void ApplyDilate()
+    {
+        ApplyBinaryMorphology(ImageProcessor.Dilate);
+    }
+
+    private void ApplyOpen()
+    {
+        ApplyBinaryMorphology(ImageProcessor.Open);
+    }
+
+    private void ApplyClose()
+    {
+        ApplyBinaryMorphology(ImageProcessor.Close);
+    }
+
+    private void ApplyBinaryMorphology(Func<BinaryImage, BinaryImage> operation)
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var binary = BinaryImageConversion.FromGrayImage(_document.Image);
+            _document.Image = BinaryImageConversion.ToGrayImage(operation(binary));
+            RefreshDisplay();
+        }
+        catch (NotSupportedException exception)
+        {
+            MessageBox.Show(this, exception.Message, "Unsupported Image", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
     }
 
     private void ApplyThreshold()
