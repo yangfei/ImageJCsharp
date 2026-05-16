@@ -290,4 +290,19 @@ public sealed class CoreImageTests
 
         Assert.Equal(new ushort[] { 10, 11 }, profile.Values);
     }
+
+    [Fact]
+    public void ProfileSamplesPixelsAlongLineRoi()
+    {
+        var image = GrayImage.FromPixels(3, 3, new ushort[]
+        {
+            1, 2, 3,
+            4, 5, 6,
+            7, 8, 9
+        });
+
+        var profile = Profile.Line(image, new LineRoi(0, 0, 2, 2));
+
+        Assert.Equal(new ushort[] { 1, 5, 9 }, profile.Values);
+    }
 }
