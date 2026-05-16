@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -17,6 +18,7 @@ public partial class Form1 : Form
     private readonly ToolStripStatusLabel _statusLabel = new ToolStripStatusLabel();
     private readonly List<ToolStripMenuItem> _requiresActiveImageItems = new List<ToolStripMenuItem>();
     private readonly List<ToolStripMenuItem> _requiresResultsItems = new List<ToolStripMenuItem>();
+    private readonly BindingList<ManagedRoi> _managedRois = new BindingList<ManagedRoi>();
     private const string NoImageStatusText = "No image";
     private MeasurementOptions _measurementOptions = MeasurementOptions.Default;
     private DisplayAdjustment? _displayAdjustment;
@@ -76,6 +78,7 @@ public partial class Form1 : Form
         AddActiveImageItem(analyze, "Plot &Profile", ShowProfile);
         AddActiveImageItem(analyze, "Set &Scale...", SetScale);
         AddItem(analyze, "Set &Measurements...", SetMeasurements);
+        AddActiveImageItem(analyze, "Add ROI to &Manager", AddCurrentRoiToManager);
         AddResultsItem(analyze, "Export &Results...", ExportResults, Keys.Control | Keys.E);
 
         var view = AddMenu(menu, "&View");
@@ -85,7 +88,7 @@ public partial class Form1 : Form
         AddActiveImageItem(view, "&Fit to Window", FitToWindow);
 
         var window = AddMenu(menu, "&Window");
-        AddDisabledItem(window, "No Window commands yet");
+        AddItem(window, "&ROI Manager", ShowRoiManager);
 
         var help = AddMenu(menu, "&Help");
         AddDisabledItem(help, "No Help commands yet");
@@ -204,6 +207,7 @@ public partial class Form1 : Form
         _document = new ImageDocument(dialog.FileName, BitmapConversion.ToGrayImage(bitmap));
         _roi = null;
         _lineRoi = null;
+        _managedRois.Clear();
         _roiShape = RoiShape.Rectangle;
         _displayAdjustment = null;
         _zoom = 1d;
@@ -240,6 +244,7 @@ public partial class Form1 : Form
         _document = null;
         _roi = null;
         _lineRoi = null;
+        _managedRois.Clear();
         _roiShape = RoiShape.Rectangle;
         _displayAdjustment = null;
         _displayBitmap?.Dispose();
@@ -431,6 +436,53 @@ public partial class Form1 : Form
 
         _document.Calibration = new PixelCalibration(pixelWidth, pixelHeight, unit.Trim());
         _statusLabel.Text = $"Scale: {pixelWidth:0.###} x {pixelHeight:0.###} {unit.Trim()}/pixel";
+    }
+
+    private void AddCurrentRoiToManager()
+    {
+        if (_lineRoi is not null)
+        {
+            _managedRois.Add(ManagedRoi.FromLine(_lineRoi.Value));
+            return;
+        }
+
+        if (_roi is null)
+        {
+            return;
+        }
+
+        _managedRois.Add(_roiShape == RoiShape.Oval
+            ? ManagedRoi.Oval(_roi.Value)
+            : ManagedRoi.Rectangle(_roi.Value));
+    }
+
+    private void ShowRoiManager()
+    {
+        var form = new RoiManagerForm(_managedRois, SelectManagedRoi, DeleteManagedRoi);
+        form.Show(this);
+    }
+
+    private void SelectManagedRoi(ManagedRoi roi)
+    {
+        if (roi.Shape == RoiShape.Line)
+        {
+            _lineRoi = roi.Line;
+            _roi = null;
+            _roiShape = RoiShape.Line;
+        }
+        else
+        {
+            _lineRoi = null;
+            _roi = roi.Bounds;
+            _roiShape = roi.Shape;
+        }
+
+        _imageBox.Invalidate();
+    }
+
+    private void DeleteManagedRoi(ManagedRoi roi)
+    {
+        _managedRois.Remove(roi);
     }
 
     private void UpdateCommandStates()
