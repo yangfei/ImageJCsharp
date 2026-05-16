@@ -67,7 +67,8 @@ Target: cover the majority of everyday ImageJ 1.x usage without Java plugin comp
 - Line and polyline ROI.
 - Polygon ROI.
 - Basic freehand ROI.
-- Move, resize, duplicate, and delete ROI.
+- Move, duplicate, and delete ROI.
+- Further ROI resize refinements beyond the baseline rectangle handles.
 - Set Scale and physical unit calibration.
 - Plot Profile.
 - Brightness and contrast display adjustment.
