@@ -75,4 +75,70 @@ public sealed class CoreImageTests
         Assert.True(edges[2, 1] > 0);
         Assert.Equal(0, edges[0, 0]);
     }
+
+    [Fact]
+    public void HistogramCountsKnownEightBitValues()
+    {
+        var image = GrayImage.FromPixels(4, 2, new ushort[]
+        {
+            0, 1, 1, 2,
+            2, 2, 255, 255
+        });
+
+        var histogram = Histogram.Calculate(image);
+
+        Assert.Equal(8, histogram.Count);
+        Assert.Equal(1, histogram.Bins[0]);
+        Assert.Equal(2, histogram.Bins[1]);
+        Assert.Equal(3, histogram.Bins[2]);
+        Assert.Equal(2, histogram.Bins[255]);
+        Assert.Equal(2, histogram.Mode);
+    }
+
+    [Fact]
+    public void HistogramComputesStatisticsForKnownEightBitValues()
+    {
+        var image = GrayImage.FromPixels(4, 1, new ushort[] { 0, 10, 10, 20 });
+
+        var histogram = Histogram.Calculate(image);
+
+        Assert.Equal(4, histogram.Count);
+        Assert.Equal(10, histogram.Mean);
+        Assert.Equal(0, histogram.Min);
+        Assert.Equal(20, histogram.Max);
+        Assert.Equal(10, histogram.Mode);
+        Assert.Equal(Math.Sqrt(50), histogram.StandardDeviation, 6);
+    }
+
+    [Fact]
+    public void HistogramUsesOnlyPixelsInsideRectRoi()
+    {
+        var image = GrayImage.FromPixels(3, 2, new ushort[]
+        {
+            1, 2, 3,
+            4, 5, 6
+        });
+
+        var histogram = Histogram.Calculate(image, new RectRoi(1, 0, 2, 2));
+
+        Assert.Equal(4, histogram.Count);
+        Assert.Equal(0, histogram.Bins[1]);
+        Assert.Equal(1, histogram.Bins[2]);
+        Assert.Equal(1, histogram.Bins[3]);
+        Assert.Equal(1, histogram.Bins[5]);
+        Assert.Equal(1, histogram.Bins[6]);
+        Assert.Equal(4, histogram.Mean);
+        Assert.Equal(2, histogram.Min);
+        Assert.Equal(6, histogram.Max);
+    }
+
+    [Fact]
+    public void HistogramRejectsValuesOutsideEightBitRange()
+    {
+        var image = GrayImage.FromPixels(1, 1, new ushort[] { 256 });
+
+        var exception = Assert.Throws<NotSupportedException>(() => Histogram.Calculate(image));
+
+        Assert.Contains("8-bit", exception.Message);
+    }
 }
