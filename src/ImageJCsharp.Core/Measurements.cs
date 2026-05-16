@@ -59,19 +59,53 @@ public static class Measurements
 {
     public static MeasurementResult Measure(GrayImage image, RectRoi roi, PixelCalibration calibration)
     {
+        return Measure(
+            image,
+            roi.X,
+            roi.Y,
+            roi.Right,
+            roi.Bottom,
+            calibration,
+            (_, _) => true,
+            nameof(roi));
+    }
+
+    public static MeasurementResult Measure(GrayImage image, OvalRoi roi, PixelCalibration calibration)
+    {
+        return Measure(
+            image,
+            roi.X,
+            roi.Y,
+            roi.Right,
+            roi.Bottom,
+            calibration,
+            roi.ContainsPixel,
+            nameof(roi));
+    }
+
+    private static MeasurementResult Measure(
+        GrayImage image,
+        int roiX,
+        int roiY,
+        int roiRight,
+        int roiBottom,
+        PixelCalibration calibration,
+        Func<int, int, bool> containsPixel,
+        string roiParameterName)
+    {
         if (image is null)
         {
             throw new ArgumentNullException(nameof(image));
         }
 
-        var startX = Math.Max(0, roi.X);
-        var startY = Math.Max(0, roi.Y);
-        var endX = Math.Min(image.Width, roi.Right);
-        var endY = Math.Min(image.Height, roi.Bottom);
+        var startX = Math.Max(0, roiX);
+        var startY = Math.Max(0, roiY);
+        var endX = Math.Min(image.Width, roiRight);
+        var endY = Math.Min(image.Height, roiBottom);
 
         if (startX >= endX || startY >= endY)
         {
-            throw new ArgumentException("ROI does not intersect the image.", nameof(roi));
+            throw new ArgumentException("ROI does not intersect the image.", roiParameterName);
         }
 
         var count = 0;
@@ -84,6 +118,11 @@ public static class Measurements
         {
             for (var x = startX; x < endX; x++)
             {
+                if (!containsPixel(x, y))
+                {
+                    continue;
+                }
+
                 var value = image[x, y];
                 count++;
                 sum += value;
@@ -91,6 +130,11 @@ public static class Measurements
                 min = Math.Min(min, value);
                 max = Math.Max(max, value);
             }
+        }
+
+        if (count == 0)
+        {
+            throw new ArgumentException("ROI does not contain any image pixels.", roiParameterName);
         }
 
         var mean = sum / count;

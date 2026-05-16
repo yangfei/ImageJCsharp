@@ -23,6 +23,8 @@ public partial class Form1 : Form
     private ImageDocument? _document;
     private Bitmap? _displayBitmap;
     private RectRoi? _roi;
+    private RoiShape _roiShape = RoiShape.Rectangle;
+    private RoiShape _selectionTool = RoiShape.Rectangle;
     private Point? _dragStartImagePoint;
     private RectRoi? _resizeStartRoi;
     private RoiResizeHandle _activeResizeHandle = RoiResizeHandle.None;
@@ -54,7 +56,8 @@ public partial class Form1 : Form
         AddItem(file, "E&xit", () => Close(), Keys.Alt | Keys.F4);
 
         var edit = AddMenu(menu, "&Edit");
-        AddDisabledItem(edit, "No Edit commands yet");
+        AddItem(edit, "&Rectangle Selection", () => _selectionTool = RoiShape.Rectangle);
+        AddItem(edit, "&Oval Selection", () => _selectionTool = RoiShape.Oval);
 
         var image = AddMenu(menu, "&Image");
         AddActiveImageItem(image, "&Brightness/Contrast...", AdjustBrightnessContrast);
@@ -198,6 +201,7 @@ public partial class Form1 : Form
         using var bitmap = new Bitmap(dialog.FileName);
         _document = new ImageDocument(dialog.FileName, BitmapConversion.ToGrayImage(bitmap));
         _roi = null;
+        _roiShape = RoiShape.Rectangle;
         _displayAdjustment = null;
         _zoom = 1d;
         RefreshDisplay();
@@ -232,6 +236,7 @@ public partial class Form1 : Form
     {
         _document = null;
         _roi = null;
+        _roiShape = RoiShape.Rectangle;
         _displayAdjustment = null;
         _displayBitmap?.Dispose();
         _displayBitmap = null;
@@ -291,8 +296,10 @@ public partial class Form1 : Form
             return;
         }
 
-        var roi = _roi ?? new RectRoi(0, 0, _document.Image.Width, _document.Image.Height);
-        var result = Measurements.Measure(_document.Image, roi, _document.Calibration);
+        var fullImageRoi = new RectRoi(0, 0, _document.Image.Width, _document.Image.Height);
+        var result = _roi is null || _roiShape == RoiShape.Rectangle
+            ? Measurements.Measure(_document.Image, _roi ?? fullImageRoi, _document.Calibration)
+            : Measurements.Measure(_document.Image, new OvalRoi(_roi.Value.X, _roi.Value.Y, _roi.Value.Width, _roi.Value.Height), _document.Calibration);
         _resultsGrid.Rows.Add(CreateMeasurementRow(result));
         UpdateCommandStates();
     }
@@ -440,7 +447,15 @@ public partial class Form1 : Form
 
         var histogram = _roi is null
             ? Histogram.Calculate(_document.Image)
-            : Histogram.Calculate(_document.Image, _roi.Value);
+            : _roiShape == RoiShape.Rectangle
+                ? Histogram.Calculate(_document.Image, _roi.Value)
+                : null;
+
+        if (histogram is null)
+        {
+            MessageBox.Show(this, "Histogram currently supports full image or rectangle ROI selections.", "Unsupported ROI", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
 
         var form = new HistogramForm(_document.DisplayName, histogram);
         form.Show(this);
@@ -455,7 +470,15 @@ public partial class Form1 : Form
 
         var profile = _roi is null
             ? Profile.HorizontalCenterLine(_document.Image)
-            : Profile.HorizontalCenterLine(_document.Image, _roi.Value);
+            : _roiShape == RoiShape.Rectangle
+                ? Profile.HorizontalCenterLine(_document.Image, _roi.Value)
+                : null;
+
+        if (profile is null)
+        {
+            MessageBox.Show(this, "Plot Profile currently supports full image or rectangle ROI selections.", "Unsupported ROI", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
 
         var form = new ProfileForm(_document.DisplayName, profile);
         form.Show(this);
@@ -604,6 +627,7 @@ public partial class Form1 : Form
         if (_activeResizeHandle == RoiResizeHandle.None)
         {
             _resizeStartRoi = null;
+            _roiShape = _selectionTool;
             _roi = new RectRoi(_dragStartImagePoint.Value.X, _dragStartImagePoint.Value.Y, 1, 1);
         }
         else
@@ -661,12 +685,19 @@ public partial class Form1 : Form
 
         var roi = _roi.Value;
         using var pen = new Pen(Color.Yellow, 1);
-        e.Graphics.DrawRectangle(
-            pen,
+        var bounds = new RectangleF(
             (float)(roi.X * _zoom),
             (float)(roi.Y * _zoom),
             (float)(roi.Width * _zoom),
             (float)(roi.Height * _zoom));
+        if (_roiShape == RoiShape.Oval)
+        {
+            e.Graphics.DrawEllipse(pen, bounds);
+        }
+        else
+        {
+            e.Graphics.DrawRectangle(pen, bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        }
 
         DrawRoiHandles(e.Graphics, roi);
     }
